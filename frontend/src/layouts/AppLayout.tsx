@@ -12,6 +12,7 @@ import { PageTransition } from "../hooks/usePageTransition";
 import { recommendationsApi } from "../api/endpoints";
 import { LogoMark } from "../components/LogoMark";
 import { AboutModal } from "../components/shared/AboutModal";
+import { CommandPalette } from "../components/shared/CommandPalette";
 import { DemoTour } from "../components/shared/DemoTour";
 
 const NAV = [
@@ -36,9 +37,9 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const [aboutOpen, setAboutOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Real badge: count of open (non-info) recommendations.
@@ -57,13 +58,19 @@ export default function AppLayout() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = search.trim();
-    navigate(q ? `/inventory?search=${encodeURIComponent(q)}` : "/inventory");
-    setSearch("");
-    setMobileOpen(false);
-  };
+  // Global Ctrl+K / Cmd+K toggles the command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const openPalette = () => setPaletteOpen(true);
 
   // The sidebar is fixed dark chrome in both themes — brand anchor.
   const sidebarBody = (onClick?: () => void) => (
@@ -190,18 +197,15 @@ export default function AppLayout() {
             )}
           </div>
 
-          <form onSubmit={submitSearch} className="ml-auto hidden max-w-sm flex-1 sm:block">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products…"
-                aria-label="Search products"
-                className="w-full rounded-full border border-ink/10 bg-surface py-2 pl-11 pr-4 text-sm text-ink placeholder:text-ink/30 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
-              />
-            </div>
-          </form>
+          <button
+            onClick={openPalette}
+            aria-label="Open command palette"
+            className="ml-auto hidden w-64 items-center gap-3 rounded-full border border-ink/10 bg-surface py-2 pl-4 pr-2 text-sm text-ink/40 shadow-sm transition-colors hover:border-brand-500/40 sm:flex lg:w-80"
+          >
+            <Search className="h-4 w-4 text-ink/30" />
+            <span className="flex-1 text-left">Search everything…</span>
+            <kbd className="rounded-md bg-ink/5 px-1.5 py-0.5 text-[10px] font-semibold text-ink/40">Ctrl K</kbd>
+          </button>
 
           {/* Theme toggle */}
           <button
@@ -227,20 +231,16 @@ export default function AppLayout() {
           </button>
         </header>
 
-        {/* Mobile search */}
+        {/* Mobile search → palette trigger */}
         <div className="px-4 pb-1 sm:hidden">
-          <form onSubmit={submitSearch}>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products…"
-                aria-label="Search products"
-                className="w-full rounded-full border border-ink/10 bg-surface py-2 pl-11 pr-4 text-sm focus:border-brand-500 focus:outline-none"
-              />
-            </div>
-          </form>
+          <button
+            onClick={openPalette}
+            aria-label="Open command palette"
+            className="flex w-full items-center gap-3 rounded-full border border-ink/10 bg-surface py-2 pl-4 pr-3 text-sm text-ink/40"
+          >
+            <Search className="h-4 w-4 text-ink/30" />
+            <span className="flex-1 text-left">Search everything…</span>
+          </button>
         </div>
 
         <main className="scrollbar-thin flex-1 overflow-y-auto px-4 pb-6 md:px-6">
@@ -256,6 +256,7 @@ export default function AppLayout() {
 
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <DemoTour open={tourOpen} onClose={() => setTourOpen(false)} />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }

@@ -42,8 +42,13 @@ Both failures come from the same blind spot: the gap between *how long stock las
 | Demand Forecast | Product/category selection, 7/30/90-day horizons, confidence intervals, backtested MAE/RMSE/MAPE, method disclosure |
 | Suppliers | Transparent weighted scoring (30/25/25/20) with per-component breakdown, trend charts, auto-generated summary |
 | Purchase Orders | Full lifecycle statuses, create/update via API, guided create form with live stock context and low-quantity warning |
-| Recommendations | Decision center grouped Critical / Warning / Opportunity, one-click "Create Purchase Order" |
-| Analytics | Inventory, procurement, sales, and efficiency sections; ABC analysis with Pareto chart; insights computed from data |
+| Recommendations | Decision center grouped Critical / Warning / Opportunity, one-click "Create Purchase Order", priority score + confidence per recommendation |
+| Control Tower | Live SUPPLIERS → PURCHASE ORDERS → WAREHOUSE → INVENTORY → CUSTOMERS flow with per-stage health, issue counts, and clickable drill-downs; single-source and concentration risks surfaced |
+| Scenario Simulator | What-if sliders (demand ±, lead time, safety stock, inventory) driving live backend recalculation; save and compare scenarios side by side |
+| Procurement IQ | Supplier spend & concentration, single-source dependency list, purchase-price variance with annualized impact, inventory aging (0-30/31-60/61-90/90+), slow movers, negotiation opportunities |
+| Analytics | Inventory, procurement, sales, and efficiency sections; ABC×XYZ segmentation with strategy notes, velocity matrix, ABC Pareto; insights computed from data |
+| Data Quality | 8-rule validation scan (missing values, duplicates, invalid dates, negative quantities, impossible transitions, missing suppliers/categories, outlier prices) with a 0-100 score and per-issue drill-down |
+| Global search | Ctrl+K command palette: products, suppliers, pages, and quick actions with keyboard navigation |
 | Data I/O | CSV import (products/sales/inventory/suppliers) with row-level validation, CSV export for all entities |
 | Settings | Service level, lead-time, safety-stock, ordering/holding cost assumptions; reset demo data; UI preferences |
 
@@ -55,18 +60,21 @@ frontend/                    React 18 + TypeScript + Vite + Tailwind
   src/components/ui/         Hand-rolled shadcn-style component kit
   src/components/charts/     Recharts wrappers (business-question titles built in)
   src/hooks/                 Auth, toasts, filters, TanStack Query data hooks
-  src/pages/                 11 routed pages + 404
+  src/pages/                 14 routed pages + 404
   src/utils/                 Formatting (₹, %, days) + CSV templates
 
 backend/                     FastAPI + Pydantic v2 + SQLAlchemy 2.0
   app/api/routes/            REST endpoints (auth, dashboard, products, suppliers,
-                             purchase-orders, recommendations, analytics, settings, import/export)
-  app/models/                SQLAlchemy models (7 tables)
+                             purchase-orders, recommendations, analytics, data-quality,
+                             intelligence, settings, import/export)
+  app/models/                SQLAlchemy models (9 tables)
   app/schemas/               Pydantic request validation
   app/services/              Business logic layer (dashboard, products, recommendations,
-                             suppliers, purchase orders, analytics, import/export, settings)
+                             suppliers, purchase orders, analytics, anomaly, control tower,
+                             intelligence, scenario, import/export, settings)
   app/analytics/             Pure explainable engines (inventory math, forecasting,
-                             EOQ, supplier scoring, ABC)
+                             EOQ, supplier scoring, ABC, segmentation, anomaly detection,
+                             health score, procurement, scenario, impact)
   app/database/              Session management + deterministic seed
   tests/                     pytest: business logic + API integration
 
@@ -170,8 +178,8 @@ cd frontend && npm run dev
 ### Tests
 
 ```bash
-cd backend && python -m pytest tests/ -q      # 62 tests: formulas + API
-cd frontend && npm test                       # 14 tests: formatting utils
+cd backend && python -m pytest tests/ -q      # 118 tests: formulas + APIs
+cd frontend && npm test                       # 33 tests: formatting + CSV utils
 ```
 
 ## 10. Demo Credentials
@@ -190,13 +198,15 @@ _Add screenshots here: dashboard KPIs, inventory health donut, forecast chart wi
 ## 12. Future Improvements
 
 - Seasonality-aware forecasting (SARIMA / Prophet) with holiday regressors
-- Multi-echelon inventory (warehouse → store) and per-region demand
-- Real JWT + role-based access control and audit logging
-- Scenario simulation ("what if demand grows 20%?") on the projection chart
-- Supplier price negotiation tracking and purchase-price-variance alerts over time
+- Interactive data explorer + natural-language question panel ("Which products are at risk of stock-out?") backed by a controlled query grammar
+- Real JWT + role-based access control
 - Email/Slack digest of critical recommendations
+- Multi-echelon inventory transfers between warehouses
 
 ## Business Value
+
+> The business journey this platform implements:
+> **DATA → MONITOR → DETECT → UNDERSTAND → FORECAST → SIMULATE → RECOMMEND → DECIDE → ACT → TRACK OUTCOME**
 
 - **Reduce stock-outs** — reorder points are computed from *actual* demand variability and supplier lead times, so orders trigger before the shortfall, not after the shelf is empty. The engine projects stock at the lead-time date, catching the "will run out in 6 days" case a naive min-level rule misses.
 - **Reduce excess inventory** — overstock detection via days-of-inventory against a configurable policy horizon, plus zero-demand flagging, keeps working capital from parking in slow SKUs.
@@ -214,8 +224,15 @@ GET  /api/products              GET  /api/products/{id}
 GET  /api/forecasts/{product_id}?horizon=30
 GET  /api/suppliers             GET  /api/suppliers/{id}
 GET  /api/purchase-orders       POST /api/purchase-orders
-PUT  /api/purchase-orders/{id}
-GET  /api/recommendations       GET  /api/analytics
+PUT  /api/purchase-orders/{id}GET /api/recommendations       GET  /api/analytics
+GET /api/data-quality
+GET /api/intelligence/control-tower
+GET /api/intelligence/anomalies?kind=demand
+GET /api/intelligence/scenarios/{product_id}?demand_pct=25&lead_delta=5
+GET /api/intelligence/scenarios/{product_id}/cost-curve
+GET /api/intelligence/abc-xyz  GET  /api/intelligence/inventory-aging
+GET /api/intelligence/velocity-matrix  GET  /api/intelligence/slow-movers
+GET /api/intelligence/procurement-intelligence
 GET  /api/settings              PUT  /api/settings
 POST /api/settings/reset-demo   (admin)
 POST /api/import/{entity}       GET  /api/export/{entity}
