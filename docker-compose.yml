@@ -1,0 +1,25 @@
+version: "3.9"
+
+# PostgreSQL for SupplyChainIQ. The backend also supports an automatic SQLite
+# fallback (no Docker needed) — see README "Run locally".
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: supplychainiq-db
+    environment:
+      POSTGRES_USER: supplyiq
+      POSTGRES_PASSWORD: supplyiq
+      POSTGRES_DB: supplychainiq
+    ports:
+      - "5433:5432"
+    volumes:
+      - supplychainiq_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supplyiq -d supplychainiq"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  supplychainiq_pgdata:

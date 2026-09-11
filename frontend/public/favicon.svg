@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- SupplyChainIQ brand tile: rounded square, blue gradient, glow, cube glyph -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.55" stop-color="#2563eb" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Ambient glow so the tile reads "glowing" in the tab strip -->
+  <rect width="64" height="64" fill="url(#glow)"/>
+
+  <!-- Rounded tile -->
+  <rect x="6" y="6" width="52" height="52" rx="14" fill="url(#tile)"/>
+
+  <!-- Isometric cube (the "Boxes" mark) -->
+  <g stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round">
+    <polygon points="32,15 47,24 32,33 17,24" fill="#ffffff" fill-opacity="0.95"/>
+    <polygon points="17,24 32,33 32,49 17,40" fill="#ffffff" fill-opacity="0.55"/>
+    <polygon points="47,24 32,33 32,49 47,40" fill="#ffffff" fill-opacity="0.75"/>
+  </g>
+</svg>

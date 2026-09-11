@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.db
+
+# Node
+node_modules/
+dist/
+*.log
+
+# Environment / secrets
+.env
+backend/.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Tool metadata
+.freebuff/

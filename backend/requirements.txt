@@ -1,0 +1,13 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+email-validator>=2.1
+pydantic-settings>=2.3
+sqlalchemy>=2.0
+psycopg2-binary>=2.9  # PostgreSQL driver (app falls back to SQLite when Postgres is absent)
+pandas>=2.0
+numpy>=1.26
+scikit-learn>=1.4
+python-multipart>=0.0.9
+pytest>=8.0
+httpx>=0.27
