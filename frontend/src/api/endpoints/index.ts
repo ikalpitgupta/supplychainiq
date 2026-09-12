@@ -3,7 +3,7 @@ import type {
   AbcXyzResponse, AnalyticsData, AnomaliesResponse, CatalogQuality, ControlTowerResponse,
   CostCurveResponse, CustomerImpact, DashboardData, DeliverySlaIntel, ForecastResponse, FulfillmentBottleneck,
   FulfillmentData, ImportReport, InboundSummary, InventoryAgingResponse, OutboundActionsResponse, ProcurementLinkage,
-  PricingIntel, PromotionsIntel, ReturnsIntel,
+  PricingIntel, PromotionsIntel, RcaAnalysis, ReturnsIntel,
   POFormContext, POListResponse, ProductDetail,
   ProductListResponse, ProcurementIntelligenceResponse, RecommendationsResponse,
   ReturnsSummary, RootCauseChain, ScenarioResponse, SettingsResponse, SizeAvailabilityResponse,
@@ -171,4 +171,9 @@ export const inboundApi = {
   catalogQuality: () => api<CatalogQuality>("/inbound/catalog-quality"),
   pricing: (days = 90) => api<PricingIntel>(`/inbound/pricing?days=${days}`),
   promotions: (days = 90) => api<PromotionsIntel>(`/inbound/promotions?days=${days}`),
+};
+
+export const rcaApi = {
+  analysis: (days = 21) => api<RcaAnalysis>(`/rca/analysis?days=${days}`),
+  problems: (days = 21) => api<{ window_days: number; problems: unknown[] }>(`/rca/problems?days=${days}`),
 };

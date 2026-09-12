@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeftRight, Boxes, CornerDownLeft, Database, FlaskConical, FileUp,
+  ArrowLeftRight, Boxes, CornerDownLeft, Database, FlaskConical, FileUp, GitBranch,
   Handshake, LayoutDashboard, Package, PackageOpen, PackageSearch, Radar, Search, Settings,
   Sparkles, Truck, TrendingUp, Zap,
 } from "lucide-react";
@@ -35,7 +35,7 @@ const PAGES: Array<{ to: string; label: string; icon: React.ComponentType<{ clas
   { to: "/returns", label: "Returns", icon: ArrowLeftRight },
   { to: "/suppliers", label: "Suppliers", icon: Handshake },
   { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
-  { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
+  { to: "/root-cause", label: "Root Cause Analysis", icon: GitBranch },
   { to: "/insights", label: "Insights & Actions", icon: Sparkles },
   { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
   { to: "/intelligence", label: "Intelligence", icon: Radar },

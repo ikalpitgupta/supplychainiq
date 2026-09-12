@@ -637,16 +637,25 @@ def seed_demo_data() -> dict:
                 pack_h = round(float(rng.uniform(0.5, 1.5)), 1)
                 disp_h = round(float(rng.uniform(5, 10)) if local else float(rng.uniform(20, 34)), 1)
                 carrier = str(rng.choice(CARRIERS))
+                # Designed carrier regression (RCA demo): in the final 21 days
+                # one carrier degrades — its late probability jumps. Nothing in
+                # the analysis layer knows this; the RCA engine must detect it
+                # from the data like it would in production.
+                recent_21d = (END_DATE - order_day).days <= 21
+                carrier_slower = carrier == "XpressBees" and recent_21d
 
                 roll = float(rng.random())
-                cancelled = roll < (0.16 if not local else 0.07)
+                cancelled = roll < ((0.16 if not local else 0.07) + (0.04 if carrier_slower else 0.0))
                 recent = (END_DATE - order_day).days <= 3
                 if cancelled:
                     status, delivered, reason = "Cancelled", None, "Stock unavailability at home DC" if not local else None
                 elif recent:
                     status, delivered, reason = "In Progress", None, None
                 else:
-                    on_time = local and float(rng.random()) < 0.93 or (not local and float(rng.random()) < 0.55)
+                    on_time_p = 0.93 if local else 0.55
+                    if carrier_slower:
+                        on_time_p -= 0.42          # the regression: this carrier slips badly
+                    on_time = local and float(rng.random()) < on_time_p or (not local and float(rng.random()) < on_time_p)
                     if on_time:
                         status, delivered, reason = "Delivered", promised, None
                     else:
@@ -655,9 +664,9 @@ def seed_demo_data() -> dict:
                         if delivered > END_DATE:
                             delivered = END_DATE
                         if not local:
-                            reason = str(rng.choice(["Routed from distant DC", "Carrier delay"], p=[0.6, 0.4]))
+                            reason = str(rng.choice(["Routed from distant DC", "Carrier delay"], p=[0.6, 0.4] if not carrier_slower else [0.35, 0.65]))
                         else:
-                            reason = str(rng.choice(["Carrier delay", "High volume at DC"], p=[0.7, 0.3]))
+                            reason = str(rng.choice(["Carrier delay", "High volume at DC"], p=[0.7, 0.3] if not carrier_slower else [0.92, 0.08]))
                     if status == "Delivered":
                         reason = reason if delivered and delivered > promised else None
 

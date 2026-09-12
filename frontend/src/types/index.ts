@@ -920,3 +920,53 @@ export interface InboundSummary {
   pricing: { avg_margin_pct: number | null; high_discount_count: number };
   promotions: { revenue: number; discount_cost: number; margin: number; orders: number };
 }
+
+/* --------------------------- Root Cause Analysis ------------------------- */
+
+export interface RcaMetric {
+  label: string;
+  prior: string;
+  recent: string;
+  delta: string;
+}
+
+export interface RcaTreeNode {
+  id: string;
+  label: string;
+  status: "flagged" | "cleared";
+  summary: string;
+  metrics: Record<string, unknown>[];
+  children: RcaTreeNode[];
+}
+
+export interface RcaContributingFactor {
+  factor: string;
+  verdict: string;
+  impact: string;
+  recommendation: string;
+  confidence?: string;
+}
+
+export interface RcaProblem {
+  id: string;
+  area: string;
+  title: string;
+  statement: string;
+  metric: string;
+  recent: number;
+  prior: number;
+  delta_pts?: number;
+  delta_pct?: number;
+  seeding: string;
+  evidence: { headline: string; metrics: RcaMetric[] } | null;
+  contributing_factor: RcaContributingFactor;
+  business_impact: { statement: string; estimated: boolean };
+  recommendation: string;
+  tree: RcaTreeNode[];
+}
+
+export interface RcaAnalysis {
+  window_days: number;
+  problems: RcaProblem[];
+  language_note: string;
+}

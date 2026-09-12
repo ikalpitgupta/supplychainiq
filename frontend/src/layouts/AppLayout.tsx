@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle, Bell, Boxes, ChevronDown, Database, FileUp, FlaskConical, Handshake, Info,
+  AlertTriangle, Bell, Boxes, ChevronDown, Database, FileUp, FlaskConical, GitBranch, Handshake, Info,
   LayoutDashboard, LogOut, Menu, Moon, PackageOpen, PackageSearch, PlayCircle, Search, Settings,
   Sparkles, Sun, Truck, X,
 } from "lucide-react";
@@ -25,6 +25,7 @@ const NAV_PRIMARY = [
   { to: "/suppliers", label: "Suppliers", icon: Handshake },
   { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
   { to: "/insights", label: "Insights & Actions", icon: Sparkles, badge: true },
+  { to: "/root-cause", label: "Root Cause Analysis", icon: GitBranch },
   { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
 ];
 const NAV_TOOLS = [

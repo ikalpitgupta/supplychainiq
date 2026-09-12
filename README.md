@@ -46,6 +46,7 @@ Both failures come from the same blind spot: the gap between *how long stock las
 | **Delivery** | Inbound supplier delivery performance (on-time rate, lead times, late-order accountability) plus **outbound SLA intelligence**: on-time rate, late rate by region / warehouse / carrier, and delay-reason mix — where are delivery SLAs breaking? |
 | **Returns** | Measured from the outbound order book: overall return rate, reason Pareto, category split (sized vs one-size), most-returned products with measured rates, disposition mix, and the ops→CX linkage (late deliveries ↔ cancellations) |
 | **Size Availability Risk** | Per-product size-level stock-out detection: a size is flagged when its stock share falls below its demand share or its cover drops under recent offtake — "XL is approaching stock-out", with revenue at risk |
+| **Root Cause Analysis** | The flagship *"don't just tell me the metric changed"* engine: detectors surface material now-vs-prior movements, then each problem is investigated through a hypothesis tree (inventory availability → warehouse allocation → fulfillment stages → carrier performance → regional mix → demand volume). Every branch is measured on the same window basis and ranked by how much of the movement it arithmetically accounts for. Causal language is disciplined — *associated with / likely contributor / potential contributor / requires investigation* — and "primary driver" is claimed only when a single factor's decomposition reproduces the movement. Interactive tree; clicking a node reveals its supporting metrics |
 | **Suppliers** | Transparent weighted scoring (delivery 30 / quality 25 / cost 25 / reliability 20) with per-component breakdown, trend charts, auto-generated summary |
 | **Inbound Intelligence** | Four lenses on one page — **Procurement** (supplier risk linkage: measured PO on-time/defect joined to downstream stock-out and overstock exposure, spend concentration HHI), **Catalog Quality** (attribute completeness by category with the size-chart ↔ returns linkage stated only when measured on both sides), **Pricing** (high-discount/low-margin products, observed unit movement after price changes — correlation, never causation), **Promotions** (campaign → orders → revenue → margin with discount cost and an organic baseline; the trade-off is explicit, e.g. a 40% campaign running at an 11% margin rate vs 47% organic) |
 | **Insights & Actions** | The decision center: recommendations grouped Critical / Warning / Opportunity, priority score + confidence per recommendation, supplier review flags, one-click "Create Purchase Order" |
@@ -276,6 +277,8 @@ GET  /api/inbound/procurement?days=120
 GET  /api/inbound/catalog-quality
 GET  /api/inbound/pricing?days=90
 GET  /api/inbound/promotions?days=90
+GET  /api/rca/analysis?days=21
+GET  /api/rca/problems?days=21
 GET  /api/analytics
 GET  /api/settings              PUT  /api/settings
 POST /api/settings/reset-demo   (admin)
