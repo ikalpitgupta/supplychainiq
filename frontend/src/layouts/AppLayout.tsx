@@ -77,7 +77,7 @@ export default function AppLayout() {
   const sidebarBody = (onClick?: () => void) => (
     <div className="flex h-full w-64 flex-col rounded-3xl bg-chrome shadow-float">
       <div className="flex items-center gap-3 px-5 pb-2 pt-6">
-        <LogoMark tagline="Decision Support" />
+        <LogoMark tagline="Fashion Commerce Supply Chain Intelligence" />
       </div>
 
       <nav className="flex-1 space-y-1 px-4 py-2" aria-label="Main navigation">

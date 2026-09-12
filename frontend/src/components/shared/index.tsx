@@ -100,11 +100,12 @@ export function KpiCard({
     <Card className="p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
-            accent === "red" ? "bg-red-500/15 text-red-600 dark:text-red-400"
-            : accent === "violet" ? "bg-violet-500/15 text-violet-600 dark:text-violet-400"
-            : accent === "yellow" ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-            : "bg-lime-300 text-chrome"}`}>IQ</span>
+          <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${
+            accent === "red" ? "bg-red-500"
+            : accent === "violet" ? "bg-violet-500"
+            : accent === "yellow" ? "bg-amber-400"
+            : accent === "green" ? "bg-emerald-500"
+            : "bg-ink/30"}`} />
           <p className="text-xs font-medium text-ink/60">{label}</p>
         </div>
         {info && <InfoTip text={info} />}

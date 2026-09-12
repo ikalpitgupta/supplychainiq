@@ -189,7 +189,7 @@ function AgingPanel() {
     <Card>
       <CardHeader
         icon={<Clock size={15} aria-hidden />}
-        title="Inventory aging"
+        title="Where is capital stuck in old stock?"
         subtitle={q.data ? `${formatINR(q.data.stale_value)} unsold for 90+ days across ${q.data.stale_products} products (days since last replenishment).` : "Buckets by days since last receipt."}
       />
       <CardBody className="space-y-3">
@@ -269,7 +269,7 @@ function SlowMoversPanel() {
     <Card>
       <CardHeader
         icon={<PackageSearch size={15} aria-hidden />}
-        title="Slow movers & excess"
+        title="Which products are quietly tying up cash?"
         subtitle={q.data ? `${formatINR(q.data.total_excess_value)} of excess stock above policy cover.` : "Products holding more stock than policy requires."}
       />
       <CardBody className="overflow-x-auto">

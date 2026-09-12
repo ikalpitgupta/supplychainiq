@@ -1,5 +1,5 @@
-// SupplyChainIQ brand lockup — glowing blue tile with the cube mark and a
-// subtle animated shine sweep for a premium feel.
+// SupplyChainIQ brand lockup — solid ink tile with the cube mark. Minimal,
+// enterprise: no glow or shine by default (kept as optional props).
 import { Boxes } from "lucide-react";
 
 const SIZES = {
@@ -7,20 +7,17 @@ const SIZES = {
   lg: { tile: "h-11 w-11 rounded-2xl", icon: "h-5 w-5", text: "text-2xl" },
 } as const;
 
-export function LogoMark({ size = "md", glow = true, shine = true, tagline }: {
+export function LogoMark({ size = "md", shine = false, tagline }: {
   size?: keyof typeof SIZES;
-  glow?: boolean;
   shine?: boolean;
   tagline?: string;
 }) {
   const s = SIZES[size];
   return (
     <div className="flex items-center gap-3">
-      {/* Glowing tile with the periodic shine sweep */}
+      {/* Solid brand tile */}
       <span
-        className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-blue-600 text-white ${s.tile} ${
-          glow ? "shadow-[0_0_24px_rgba(37,99,235,0.6)]" : ""
-        }`}
+        className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-chrome text-white ${s.tile}`}
         aria-hidden
       >
         <Boxes className={`relative z-10 ${s.icon}`} strokeWidth={2.2} />
@@ -34,10 +31,10 @@ export function LogoMark({ size = "md", glow = true, shine = true, tagline }: {
 
       <div className="leading-none">
         <p className={`font-display font-semibold tracking-tight text-white ${s.text}`}>
-          SupplyChain<span className="text-blue-400">IQ</span>
+          SupplyChain<span className="text-lime-300">IQ</span>
         </p>
         {tagline && (
-          <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-white/40">{tagline}</p>
+          <p className="mt-1 text-[9px] uppercase leading-relaxed tracking-[0.14em] text-white/40">{tagline}</p>
         )}
       </div>
     </div>

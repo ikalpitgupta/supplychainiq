@@ -45,30 +45,30 @@ export default function LoginPage() {
   return (
     // Fixed dark backdrop: the brand lockup (blue tile + white wordmark) and the
     // diorama are designed against it, in both app themes.
-    <div className="relative min-h-screen overflow-hidden bg-[#0a1220]">
-      {/* Ambient blue glow echoing the diorama artwork */}
+    <div className="relative min-h-screen overflow-hidden bg-[#0e1013]">
+      {/* Ambient warm/cool glows echoing the brand lime + steel palette */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-blue-600/20 blur-[120px]" />
-        <div className="absolute -bottom-40 left-1/3 h-[460px] w-[460px] rounded-full bg-blue-500/15 blur-[130px]" />
+        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-chrome/25 blur-[120px]" />
+        <div className="absolute -bottom-40 left-1/3 h-[460px] w-[460px] rounded-full bg-brand-500/10 blur-[130px]" />
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl items-center gap-10 px-4 py-8 md:px-10 lg:gap-14">
         {/* Left: floating hero element — the SupplyChainIQ diorama */}
         <div className="relative hidden flex-1 flex-col lg:flex">
-          <LogoMark size="lg" tagline="Decision Support" />
+          <LogoMark size="lg" tagline="Fashion Commerce Supply Chain Intelligence" />
 
           {/* The diorama, floating on the dark canvas with a blue halo */}
           <div className="animate-fade-float relative mt-10 [animation-delay:120ms]">
-            <div aria-hidden className="absolute -inset-6 rounded-[2.5rem] bg-blue-600/20 blur-3xl" />
+            <div aria-hidden className="absolute -inset-6 rounded-[2.5rem] bg-chrome/20 blur-3xl" />
             <img
               src="/warehouse-diorama.jpg"
               alt="SupplyChainIQ fulfillment hub — a miniature warehouse with trucks and a forklift"
-              className="relative w-full rounded-[2rem] shadow-[0_50px_120px_-30px_rgba(37,99,235,0.55)] ring-1 ring-white/10"
+              className="relative w-full rounded-[2rem] shadow-[0_50px_120px_-30px_rgba(0,0,0,0.55)] ring-1 ring-white/10"
               draggable={false}
             />
-            {/* Floating capability chip, echoing the reference's "Anticipate" bubble */}
+            {/* Floating capability chip */}
             <div className="animate-fade-float absolute -top-4 right-6 rounded-2xl bg-surface/95 px-4 py-2.5 text-xs font-semibold text-ink shadow-lg backdrop-blur [animation-delay:720ms]">
-              Anticipate. Optimize. <span className="text-blue-600">Procure smarter.</span>
+              Anticipate. Decide. <span className="text-brand-600">Act with confidence.</span>
             </div>
           </div>
 
@@ -83,8 +83,8 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-8 flex items-center gap-2 border-t border-white/10 pt-5 text-xs text-white/40">
-            <ShieldCheck className="h-4 w-4 text-blue-400" />
-            Trusted by operations teams to keep shelves stocked and cash flowing
+            <ShieldCheck className="h-4 w-4 text-lime-300" />
+            Fashion commerce operations, from demand data to replenishment decisions
             <TrendingUp className="ml-auto h-4 w-4 text-lime-300" />
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function LoginPage() {
         <div className="flex w-full max-w-md flex-1 flex-col justify-center">
           {/* Compact brand for small screens where the hero is hidden */}
           <div className="mb-8 lg:hidden">
-            <LogoMark size="lg" tagline="Decision Support" />
+            <LogoMark size="lg" tagline="Fashion Commerce Supply Chain Intelligence" />
           </div>
 
           <div className="animate-fade-slide-up rounded-[2rem] bg-surface p-8 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.5)] [animation-delay:240ms] md:p-10">
@@ -132,7 +132,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/35 transition-all hover:bg-blue-700 hover:shadow-blue-600/50 hover:animate-none disabled:opacity-60 animate-glow-pulse [animation-delay:1s]"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-chrome py-3 text-sm font-semibold text-white shadow-lg shadow-black/30 transition-all hover:bg-chrome-soft disabled:opacity-60"
               >
                 {busy ? "Signing in…" : <>Sign in <ArrowRight className="h-4 w-4" /></>}
               </button>
@@ -147,16 +147,16 @@ export default function LoginPage() {
               {DEMOS.map((d) => (
                 <button key={d.email}
                   onClick={() => { setEmail(d.email); setPassword(d.password); }}
-                  className="flex w-full items-center justify-between gap-2 rounded-full bg-panel px-3.5 py-2.5 text-left text-xs ring-1 ring-ink/10 transition-all hover:bg-lime-50 hover:ring-blue-400"
+                  className="flex w-full items-center justify-between gap-2 rounded-full bg-panel px-3.5 py-2.5 text-left text-xs ring-1 ring-ink/10 transition-all hover:bg-lime-50 hover:ring-brand-400"
                 >
                   <span className="flex min-w-0 items-center gap-2">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-brand-600">
                       <d.icon className="h-3.5 w-3.5" />
                     </span>
                     <span className="shrink-0 font-semibold text-ink">{d.role}</span>
                     <span className="truncate text-ink/40">{d.email}</span>
                   </span>
-                  <span className="shrink-0 font-medium text-blue-600">Fill →</span>
+                  <span className="shrink-0 font-medium text-brand-600">Fill →</span>
                 </button>
               ))}
             </div>
@@ -164,7 +164,7 @@ export default function LoginPage() {
             <p className="mt-6 text-center text-xs text-ink/40">
               New here?{" "}
               <button type="button" onClick={() => { setEmail(DEMOS[1].email); setPassword(DEMOS[1].password); }}
-                className="font-semibold text-blue-600 hover:text-blue-700">
+                className="font-semibold text-brand-600 hover:text-brand-700">
                 Explore the demo →
               </button>
             </p>

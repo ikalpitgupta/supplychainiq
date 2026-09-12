@@ -116,8 +116,8 @@ export function TR({ children, className = "", onClick }: { children: ReactNode;
     </tr>
   );
 }
-export function TD({ children, className = "" }: { children?: ReactNode; className?: string }) {
-  return <td className={`px-4 py-3 align-middle ${className}`}>{children}</td>;
+export function TD({ children, className = "", colSpan }: { children?: ReactNode; className?: string; colSpan?: number }) {
+  return <td colSpan={colSpan} className={`px-4 py-3 align-middle ${className}`}>{children}</td>;
 }
 
 /* --------------------------------- Dialog -------------------------------- */

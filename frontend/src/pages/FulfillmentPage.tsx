@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Download, Plus } from "lucide-react";
+import { ChevronDown, Download, Plus } from "lucide-react";
 import { poApi } from "../api/endpoints";
 import { downloadCsv } from "../api/client";
 import { Badge, Button, Card, ConfirmDialog, Dialog, EmptyState, ErrorState, Input, Pagination, SkeletonRows, Table, TD, TH, THead, TR, Tabs } from "../components/ui";
@@ -14,7 +14,7 @@ import type { POListItem, POStatus } from "../types";
 const statusTone = (s: string) =>
   s === "Delivered" ? "green" : s === "Delayed" ? "red" : s === "Cancelled" ? "gray" : s === "Draft" ? "gray" : "blue";
 
-export default function PurchaseOrdersPage() {
+export default function FulfillmentPage() {
   const [params, setParams] = useSearchParams();
   const { push } = useToast();
   const page = Number(params.get("page") ?? 1);
@@ -22,6 +22,7 @@ export default function PurchaseOrdersPage() {
   const search = params.get("search") ?? "";
   const [searchInput, setSearchInput] = useState(search);
   const [detail, setDetail] = useState<POListItem | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createFor, setCreateFor] = useState<number | undefined>(
     params.get("create") ? Number(params.get("create")) : undefined,
@@ -61,8 +62,8 @@ export default function PurchaseOrdersPage() {
   return (
     <div>
       <PageHeader
-        title="Purchase Orders"
-        subtitle="Track every replenishment order from draft to delivery."
+        title="Fulfillment"
+        subtitle="The replenishment pipeline — which orders are at risk, what they cost, and what to do next."
         right={
           <>
             <Button variant="secondary" size="sm" onClick={async () => {
@@ -109,29 +110,61 @@ export default function PurchaseOrdersPage() {
               <Table>
                 <THead>
                   <TR>
-                    <TH>PO Number</TH><TH>Product</TH><TH>Supplier</TH>
-                    <TH className="text-right">Quantity</TH><TH>Ordered</TH><TH>Expected</TH><TH>Actual</TH>
-                    <TH>Status</TH><TH className="text-right">Total Cost</TH>
+                    <TH>PO</TH><TH>Product</TH><TH>Supplier</TH>
+                    <TH>Delivery risk</TH><TH className="text-right">Value at stake</TH>
+                    <TH className="w-8" aria-label="Expand row" />
                   </TR>
                 </THead>
                 <tbody>
-                  {q.data.items.map((po) => (
-                    <TR key={po.id} onClick={() => setDetail(po)}>
-                      <TD className="font-medium text-brand-700">{po.po_number}</TD>
-                      <TD className="text-ink/70">{po.product}</TD>
-                      <TD className="text-ink/50">{po.supplier}</TD>
-                      <TD className="text-right">{formatNumber(po.quantity)}</TD>
-                      <TD className="text-ink/50">{formatDate(po.order_date)}</TD>
-                      <TD className="text-ink/50">{formatDate(po.expected_date)}</TD>
-                      <TD className="text-ink/50">{formatDate(po.actual_date)}</TD>
-                      <TD>
-                        <Badge tone={statusTone(po.status)} dot>
-                          {po.status}{po.days_late ? ` (+${po.days_late}d)` : ""}
-                        </Badge>
-                      </TD>
-                      <TD className="text-right text-ink/70">{formatINR(po.total_cost)}</TD>
-                    </TR>
-                  ))}
+                  {q.data.items.map((po) => {
+                    const atRisk = po.status === "Delayed" || po.days_late > 0;
+                    const expanded = expandedId === po.id;
+                    return (
+                      <Fragment key={po.id}>
+                        <TR
+                          onClick={() => setExpandedId(expanded ? null : po.id)}
+                          className={atRisk ? "bg-red-500/[0.04]" : undefined}
+                        >
+                          <TD className="font-medium text-brand-700">{po.po_number}</TD>
+                          <TD className="text-ink/70">{po.product}</TD>
+                          <TD className="text-ink/50">{po.supplier}</TD>
+                          <TD>
+                            <Badge tone={statusTone(po.status)} dot>
+                              {po.status}{po.days_late ? ` (+${po.days_late}d)` : ""}
+                            </Badge>
+                          </TD>
+                          <TD className="text-right text-ink/70">{formatINR(po.total_cost)}</TD>
+                          <TD>
+                            <ChevronDown className={`h-3.5 w-3.5 text-ink/30 transition-transform ${expanded ? "rotate-180" : ""}`} aria-hidden />
+                          </TD>
+                        </TR>
+                        {expanded && (
+                          <TR className="bg-ink/[0.02]">
+                            <TD className="!p-0" />
+                            <TD className="!py-3" colSpan={5}>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-3 lg:grid-cols-6">
+                                <Detail label="Quantity" value={`${formatNumber(po.quantity)} units`} />
+                                <Detail label="Unit cost" value={formatINR(po.unit_cost, false)} />
+                                <Detail label="Ordered" value={formatDate(po.order_date)} />
+                                <Detail label="Expected" value={formatDate(po.expected_date)} />
+                                <Detail label="Actual" value={formatDate(po.actual_date)} />
+                                <div className="flex items-end">
+                                  <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); setDetail(po); }}>
+                                    Manage status
+                                  </Button>
+                                </div>
+                              </div>
+                              {atRisk && (
+                                <p className="mt-2 text-[11px] text-red-500">
+                                  This order slipped {po.days_late} day{po.days_late === 1 ? "" : "s"} past its expected date — every day late narrows stock cover downstream.
+                                </p>
+                              )}
+                            </TD>
+                          </TR>
+                        )}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </Table>
               <Pagination page={page} pageSize={15} total={q.data.total} onPage={(p) => setParam("page", String(p))} />
@@ -187,6 +220,15 @@ export default function PurchaseOrdersPage() {
         }}
         productId={createFor}
       />
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-ink/40">{label}</p>
+      <p className="mt-0.5 font-medium text-ink">{value}</p>
     </div>
   );
 }

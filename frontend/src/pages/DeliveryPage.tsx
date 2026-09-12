@@ -91,7 +91,7 @@ export default function DeliveryPage() {
           </Stagger>
 
           <Card>
-            <CardHeader icon={<Timer size={15} aria-hidden />} title="Monthly delivery rhythm" subtitle="Order volume and lateness by month — red months need a supplier conversation." />
+            <CardHeader icon={<Timer size={15} aria-hidden />} title="Where are delivery SLAs breaking?" subtitle="Order volume and lateness by month — red months need a supplier conversation." />
             <CardBody><MonthlyBars monthly={d.monthly} /></CardBody>
           </Card>
 
@@ -99,7 +99,7 @@ export default function DeliveryPage() {
             <Card>
               <CardHeader
                 icon={<TriangleAlert size={15} aria-hidden />}
-                title="Late deliveries"
+                title="Which orders slipped, and by how much?"
                 subtitle="These POs arrived after the expected date — each one pushed a replenishment back and narrowed stock cover."
               />
               <CardBody className="overflow-x-auto">
@@ -128,7 +128,7 @@ export default function DeliveryPage() {
             <Card>
               <CardHeader
                 icon={<Clock size={15} aria-hidden />}
-                title="Inbound pipeline"
+                title="What stock is arriving, and when?"
                 subtitle="Orders currently in flight — arriving stock that has not hit the ledger yet."
               />
               <CardBody className="overflow-x-auto">

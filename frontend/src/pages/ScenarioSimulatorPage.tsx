@@ -246,7 +246,7 @@ export default function ScenarioSimulatorPage() {
                 <Card>
                   <CardHeader
                     icon={<Save size={15} aria-hidden />}
-                    title="Cost vs service level"
+                    title="What does a higher service promise cost?"
                     subtitle="Total inventory cost (holding + expected stock-out) at each service level — the U-curve picks the cheapest point."
                     right={curveMinService && (
                       <span className="text-xs text-ink/50">
