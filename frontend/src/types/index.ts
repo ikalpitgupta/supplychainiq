@@ -970,3 +970,71 @@ export interface RcaAnalysis {
   problems: RcaProblem[];
   language_note: string;
 }
+
+/* ----------------------------- PM decision layer ------------------------- */
+
+export interface PmKpi {
+  name: string;
+  baseline?: number | null;
+  mde_pts?: number;
+}
+
+export interface PmExperiment {
+  hypothesis: string;
+  control: string;
+  variant: string;
+  primary_kpi: PmKpi;
+  secondary_kpis: string[];
+  guardrail_kpis: string[];
+  sample_size_per_arm: number;
+  sizing_note: string;
+  duration_weeks: number;
+}
+
+export interface PmInitiative {
+  id: string;
+  title: string;
+  area: string;
+  source_insight: string;
+  problem_statement: string;
+  solution: string;
+  window_days: number;
+  opportunity: {
+    affected_orders_90d: number;
+    affected_products: number | null;
+    revenue_exposure: number | null;
+    customer_impact: string;
+    basis: string;
+  };
+  rice: {
+    reach: number;
+    impact: number;
+    confidence: number;
+    effort_weeks: number;
+    confidence_basis: string;
+    effort_basis: string;
+    score: number;
+    quadrant: string;
+  };
+  experiment: PmExperiment | null;
+  decision: {
+    state: "ship" | "run_experiment" | "reject" | string;
+    label: string;
+    reason: string;
+    ship_criteria: string;
+    iterate_criteria: string;
+    reject_criteria: string;
+  };
+  business_impact: {
+    levers: Record<string, string>;
+    trade_off: string;
+  };
+}
+
+export interface PmDecisionLayer {
+  window_days: number;
+  baselines: { orders: number; late_rate: number; cancel_rate: number; return_rate: number; aov: number };
+  initiatives: PmInitiative[];
+  quadrants: { quick_wins: string[]; big_bets: string[]; fill_ins: string[]; reconsider: string[] };
+  method_note: string;
+}

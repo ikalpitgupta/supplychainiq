@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { ClipboardList, Download, TrendingDown, TrendingUp, Wrench } from "lucide-react";
+import DecisionPacketCard from "../components/shared/DecisionPacketCard";
 import { WhyModal } from "../components/shared/WhyModal";
-import { recommendationsApi } from "../api/endpoints";
+import { pmApi, recommendationsApi } from "../api/endpoints";
 import { downloadCsv } from "../api/client";
 import { Badge, Button, Card, CardBody, CardHeader, EmptyState, ErrorState, InfoTip, Skeleton, Tabs } from "../components/ui";
 import { ActionBadge, PageHeader, SeverityBadge } from "../components/shared";
@@ -33,6 +34,8 @@ export default function RecommendationsPage() {
   const { push } = useToast();
 
   const q = useQuery({ queryKey: ["recommendations"], queryFn: recommendationsApi.get });
+  const pmQ = useQuery({ queryKey: ["pm-decisions"], queryFn: pmApi.decisions, staleTime: 120_000 });
+  const pm = pmQ.data;
 
   const setGroup = (g: string) => setParams({ group: g }, { replace: true });
 
@@ -54,6 +57,22 @@ export default function RecommendationsPage() {
       />
 
       {q.isError && <Card><ErrorState message={(q.error as Error)?.message || "Failed to load recommendations"} onRetry={() => q.refetch()} /></Card>}
+
+      {/* PM decision layer: insights → structured product initiatives */}
+      {pm && pm.initiatives.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader
+            title="Product initiatives — the PM decision layer"
+            subtitle={`${pm.initiatives.length} initiatives from live analytics: ${pm.quadrants.quick_wins.length} quick wins · ${pm.quadrants.reconsider.length} rejected on evidence. Problem → opportunity → RICE → experiment → decision.`}
+          />
+          <CardBody className="space-y-3">
+            {pm.initiatives.map((i, idx) => (
+              <DecisionPacketCard key={i.id} i={i} defaultOpen={idx === 0} />
+            ))}
+            <p className="text-[10px] leading-relaxed text-ink/40">{pm.method_note}</p>
+          </CardBody>
+        </Card>
+      )}
 
       {q.isLoading && <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}</div>}
 
