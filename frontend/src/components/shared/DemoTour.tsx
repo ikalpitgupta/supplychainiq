@@ -17,7 +17,7 @@ interface Step {
 const STEPS: Step[] = [
   {
     title: "1 · Inventory risk detected",
-    body: "The engine projects every product's stock at its supplier's lead-time date. Products that fall below safety stock before replenishment arrives are flagged CRITICAL — for the seeded demo, Laptop Bag stocks out in 8 days against a 10-day lead time.",
+    body: "The engine projects every product's stock at its supplier's lead-time date. Products that fall below safety stock before replenishment arrives are flagged CRITICAL — for the seeded demo, Festive Kurta Set stocks out in 8 days against a 10-day lead time.",
   },
   {
     title: "2 · Demand forecast evaluated",
@@ -29,7 +29,7 @@ const STEPS: Step[] = [
   },
   {
     title: "4 · Suppliers compared",
-    body: "Every supplier serving the category is scored: delivery 30% · quality 25% · cost 25% · reliability 20%. For critical items, reliability is weighted up — cheap-but-late suppliers lose ground.",
+    body: "Every supplier serving the category is scored: delivery 30% · quality 25% · cost 25% · reliability 20%. For critical items, reliability is weighted up — a cheaper but late embroiderer loses to a reliable one when the festive window is closing.",
   },
   {
     title: "5 · Optimal supplier selected",
@@ -42,7 +42,7 @@ const STEPS: Step[] = [
   {
     title: "7 · Purchase recommendation generated",
     body: "The final packet: action, quantity, supplier, estimated cost, the full WHY breakdown, and the estimated impact — ready to convert into a purchase order.",
-    cta: { label: "Open Recommendations", to: "/recommendations" },
+    cta: { label: "Open Insights & Actions", to: "/insights" },
   },
 ];
 

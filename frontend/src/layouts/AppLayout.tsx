@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle, BarChart3, Bell, Boxes, ChevronDown, Database, FlaskConical, HandCoins, Info,
-  LayoutDashboard, LogOut, Menu, Moon, ClipboardList, FileUp, PlayCircle, Radar, Search, Settings,
-  Sparkles, Sun, Truck, TrendingUp, X,
+  AlertTriangle, Bell, Boxes, ChevronDown, Database, FileUp, FlaskConical, Handshake, Info,
+  LayoutDashboard, LogOut, Menu, Moon, PackageSearch, PlayCircle, Search, Settings,
+  Sparkles, Sun, Truck, X,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
@@ -15,17 +15,18 @@ import { AboutModal } from "../components/shared/AboutModal";
 import { CommandPalette } from "../components/shared/CommandPalette";
 import { DemoTour } from "../components/shared/DemoTour";
 
-const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/control-tower", label: "Control Tower", icon: Radar },
+// Business journey: DEMAND → INVENTORY → FULFILLMENT → DELIVERY → SUPPLIERS →
+// INSIGHTS & ACTIONS → SCENARIO LAB. Platform tools live in their own group.
+const NAV_PRIMARY = [
+  { to: "/", label: "Command Center", icon: LayoutDashboard, end: true },
   { to: "/inventory", label: "Inventory", icon: Boxes },
-  { to: "/forecast", label: "Forecast", icon: TrendingUp },
-  { to: "/simulator", label: "Scenario Simulator", icon: FlaskConical },
-  { to: "/procurement", label: "Procurement IQ", icon: HandCoins },
-  { to: "/suppliers", label: "Suppliers", icon: Truck },
-  { to: "/purchase-orders", label: "Purchase Orders", icon: ClipboardList },
-  { to: "/recommendations", label: "Recommendations", icon: Sparkles, badge: true },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/fulfillment", label: "Fulfillment", icon: PackageSearch },
+  { to: "/delivery", label: "Delivery", icon: Truck },
+  { to: "/suppliers", label: "Suppliers", icon: Handshake },
+  { to: "/insights", label: "Insights & Actions", icon: Sparkles, badge: true },
+  { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
+];
+const NAV_TOOLS = [
   { to: "/data-quality", label: "Data Quality", icon: Database },
   { to: "/import", label: "Import data", icon: FileUp },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -80,7 +81,7 @@ export default function AppLayout() {
       </div>
 
       <nav className="flex-1 space-y-1 px-4 py-2" aria-label="Main navigation">
-        {NAV.map(({ to, label, icon: Icon, end, badge }) => (
+        {NAV_PRIMARY.map(({ to, label, icon: Icon, end, badge }) => (
           <NavLink
             key={to}
             to={to}
@@ -101,6 +102,22 @@ export default function AppLayout() {
             )}
           </NavLink>
         ))}
+        <p className="px-4 pb-1 pt-4 text-[10px] font-bold uppercase tracking-widest text-white/30">Platform</p>
+        {NAV_TOOLS.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            onClick={onClick}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                isActive ? "bg-surface text-ink shadow-sm" : "text-white/50 hover:bg-white/10 hover:text-white"
+              }`
+            }
+          >
+            <Icon className="h-4 w-4" />
+            <span className="flex-1">{label}</span>
+          </NavLink>
+        ))}
       </nav>
 
       <div className="p-4 space-y-3">
@@ -111,12 +128,12 @@ export default function AppLayout() {
           <PlayCircle className="h-3.5 w-3.5" /> Run Demo Scenario
         </button>
         <div className="rounded-3xl bg-lime-300 p-4">
-          <p className="font-display text-base font-semibold text-chrome">Action center</p>
+          <p className="font-display text-base font-semibold text-chrome">Actions required</p>
           <p className="mt-0.5 text-xs leading-relaxed text-chrome/70">
-            {recsQ.data ?? 0} open recommendation{recsQ.data === 1 ? "" : "s"} waiting on a decision.
+            {recsQ.data ?? 0} recommendation{recsQ.data === 1 ? "" : "s"} waiting on a decision.
           </p>
           <button
-            onClick={() => { navigate("/recommendations"); onClick?.(); }}
+            onClick={() => { navigate("/insights"); onClick?.(); }}
             className="mt-3 w-full rounded-full bg-chrome px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-chrome-soft"
           >
             Review now
@@ -218,8 +235,8 @@ export default function AppLayout() {
           </button>
 
           <button
-            onClick={() => navigate("/recommendations")}
-            aria-label="Open action center"
+            onClick={() => navigate("/insights")}
+            aria-label="Open actions required"
             className="relative rounded-full bg-surface p-2.5 text-ink shadow-sm transition-shadow hover:shadow"
           >
             <Bell className="h-4 w-4" />

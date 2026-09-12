@@ -6,7 +6,7 @@ import type { ImportReport } from "../types";
 
 /* ------------------------------- Templates ------------------------------- */
 export const CSV_TEMPLATES: Record<string, string> = {
-  products: "sku,name,category,supplier,unit_cost,selling_price,lead_time_days\nSPO-001,Widget Pro,Electronics,Nexus Components Pvt Ltd,499,699,10",
+  products: "sku,name,category,supplier,unit_cost,selling_price,lead_time_days\nSPO-001,Festive Kurta Set,Fashion,UrbanStitch Apparel,640,1056,10",
   sales: "sku,sale_date,quantity,revenue,region\nSPO-001,2026-09-01,12,8388,North",
   inventory: "sku,date,opening_stock,received_quantity,sold_quantity,closing_stock\nSPO-001,2026-09-01,100,0,12,88",
   suppliers: "name,lead_time_days,unit_cost,on_time_rate,defect_rate,reliability_score\nAcme Supplies,12,1.02,0.91,0.015,0.88",

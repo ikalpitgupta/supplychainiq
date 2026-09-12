@@ -41,7 +41,7 @@ export default function RecommendationsPage() {
   return (
     <div>
       <PageHeader
-        title="Recommendations"
+        title="Insights & Actions"
         subtitle="The decision center — what to order, when, how much, and from whom."
         right={
           <Button variant="secondary" size="sm" onClick={async () => {

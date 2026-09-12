@@ -414,6 +414,45 @@ export interface ControlTowerResponse {
   summary: Record<string, number | string>;
 }
 
+/* ------------------- Fulfillment (supplier-side pipeline) ------------------- */
+
+export interface FulfillmentData {
+  period_days: number;
+  status_counts: Record<string, number>;
+  total_pos: number;
+  on_time_rate: number;
+  delay_rate: number;
+  avg_lead_time_days: number | null;
+  avg_delay_days: number | null;
+  spend_total: number;
+  spend_30d: number;
+  spend_30d_prev: number;
+  price_variance_pct: number | null;
+  monthly: { month: string; orders: number; on_time: number; late: number; spend: number }[];
+  late_orders: POListItem[];
+  inbound: POListItem[];
+}
+
+/* ------------------------- Returns (honest placeholder) ------------------------ */
+
+export interface ReturnsSummary {
+  available: boolean;
+  message: string;
+  reason?: string;
+  scope?: string;
+  indicative_rate_pct?: number;
+  selling_price_exposed: boolean;
+  top_lines: {
+    product_id: number;
+    product: string;
+    category: string;
+    sold_365d: number;
+    revenue_365d: number;
+    return_band: string;
+    exposure_note: string;
+  }[];
+}
+
 export interface AnomalyItem {
   series: string;
   key: number | string;

@@ -7,9 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  BarChart3, Boxes, ClipboardList, CornerDownLeft, Database, FlaskConical, FileUp,
-  HandCoins, LayoutDashboard, Package, Radar, Search, Settings, Sparkles, Truck,
-  TrendingUp, Zap,
+  ArrowLeftRight, Boxes, CornerDownLeft, Database, FlaskConical, FileUp,
+  Handshake, LayoutDashboard, Package, PackageSearch, Radar, Search, Settings,
+  Sparkles, Truck, TrendingUp, Zap,
 } from "lucide-react";
 import { productsApi, suppliersApi } from "../../api/endpoints";
 import type { ProductRow, SupplierScore } from "../../types";
@@ -27,16 +27,16 @@ interface Cmd {
 }
 
 const PAGES: Array<{ to: string; label: string; icon: React.ComponentType<{ className?: string }> }> = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/control-tower", label: "Control Tower", icon: Radar },
+  { to: "/", label: "Command Center", icon: LayoutDashboard },
   { to: "/inventory", label: "Inventory", icon: Boxes },
   { to: "/forecast", label: "Demand Forecast", icon: TrendingUp },
-  { to: "/simulator", label: "Scenario Simulator", icon: FlaskConical },
-  { to: "/procurement", label: "Procurement IQ", icon: HandCoins },
-  { to: "/suppliers", label: "Suppliers", icon: Truck },
-  { to: "/purchase-orders", label: "Purchase Orders", icon: ClipboardList },
-  { to: "/recommendations", label: "Recommendations", icon: Sparkles },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/fulfillment", label: "Fulfillment", icon: PackageSearch },
+  { to: "/delivery", label: "Delivery", icon: Truck },
+  { to: "/returns", label: "Returns", icon: ArrowLeftRight },
+  { to: "/suppliers", label: "Suppliers", icon: Handshake },
+  { to: "/insights", label: "Insights & Actions", icon: Sparkles },
+  { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
+  { to: "/intelligence", label: "Intelligence", icon: Radar },
   { to: "/data-quality", label: "Data Quality", icon: Database },
   { to: "/import", label: "Import data", icon: FileUp },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -44,10 +44,10 @@ const PAGES: Array<{ to: string; label: string; icon: React.ComponentType<{ clas
 
 const ACTIONS: Cmd[] = [
   { id: "act-critical", label: "View critical inventory", hint: "Filtered list", section: "Actions", icon: <Zap className="h-4 w-4 text-red-500" />, run: (nav) => nav("/inventory?status=Critical") },
-  { id: "act-recs", label: "Review recommendations", hint: "Action center", section: "Actions", icon: <Sparkles className="h-4 w-4 text-lime-500" />, run: (nav) => nav("/recommendations") },
-  { id: "act-forecast", label: "Run forecast", hint: "Demand forecast page", section: "Actions", icon: <TrendingUp className="h-4 w-4 text-brand-500" />, run: (nav) => nav("/forecast") },
-  { id: "act-po", label: "Create purchase order", hint: "PO create form", section: "Actions", icon: <ClipboardList className="h-4 w-4 text-brand-500" />, run: (nav) => nav("/purchase-orders") },
-  { id: "act-sim", label: "Open scenario simulator", hint: "What-if analysis", section: "Actions", icon: <FlaskConical className="h-4 w-4 text-brand-500" />, run: (nav) => nav("/simulator") },
+  { id: "act-recs", label: "Review actions required", hint: "Insights & Actions", section: "Actions", icon: <Sparkles className="h-4 w-4 text-lime-500" />, run: (nav) => nav("/insights") },
+  { id: "act-forecast", label: "Run forecast", hint: "Demand forecast page", section: "Actions", icon: <PackageSearch className="h-4 w-4 text-brand-500" />, run: (nav) => nav("/forecast") },
+  { id: "act-po", label: "Create purchase order", hint: "Fulfillment create form", section: "Actions", icon: <PackageSearch className="h-4 w-4 text-brand-500" />, run: (nav) => nav("/fulfillment") },
+  { id: "act-sim", label: "Open scenario lab", hint: "What-if analysis", section: "Actions", icon: <FlaskConical className="h-4 w-4 text-brand-500" />, run: (nav) => nav("/simulator") },
 ];
 
 const RECENTS_KEY = "sciq.palette.recents";

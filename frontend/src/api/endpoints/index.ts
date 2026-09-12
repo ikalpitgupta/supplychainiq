@@ -1,10 +1,10 @@
 import { api, apiUpload } from "../client";
 import type {
   AbcXyzResponse, AnalyticsData, AnomaliesResponse, ControlTowerResponse,
-  CostCurveResponse, DashboardData, ForecastResponse, ImportReport,
+  CostCurveResponse, DashboardData, ForecastResponse, FulfillmentData, ImportReport,
   InventoryAgingResponse, POFormContext, POListResponse, ProductDetail,
   ProductListResponse, ProcurementIntelligenceResponse, RecommendationsResponse,
-  ScenarioResponse, SettingsResponse, SlowMoversResponse, SupplierDetail,
+  ReturnsSummary, ScenarioResponse, SettingsResponse, SlowMoversResponse, SupplierDetail,
   SupplierListResponse, User, VelocityMatrixResponse,
 } from "../../types";
 
@@ -72,6 +72,18 @@ export const recommendationsApi = {
 
 export const analyticsApi = {
   get: (periodDays = 365) => api<AnalyticsData>(`/analytics?period_days=${periodDays}`),
+};
+
+export const metaApi = {
+  categories: () => api<{ items: string[] }>("/meta/categories"),
+};
+
+export const fulfillmentApi = {
+  summary: (periodDays = 90) => api<FulfillmentData>(`/fulfillment/summary?period_days=${periodDays}`),
+};
+
+export const returnsApi = {
+  summary: () => api<ReturnsSummary>("/returns/summary"),
 };
 
 export const intelligenceApi = {

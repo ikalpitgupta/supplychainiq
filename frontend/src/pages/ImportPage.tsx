@@ -635,7 +635,7 @@ export default function ImportPage() {
                             </button>
                           ))}
                           {recsDelta.newAlerts.length > 5 && (
-                            <button onClick={() => window.location.assign("/recommendations")} className="pl-1 text-xs font-semibold text-lime-300 hover:underline">
+                            <button onClick={() => window.location.assign("/insights")} className="pl-1 text-xs font-semibold text-lime-300 hover:underline">
                               View all {recsDelta.newAlerts.length} in Recommendations →
                             </button>
                           )}

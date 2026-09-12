@@ -15,18 +15,18 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import ForecastPage from "./pages/ForecastPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import SupplierDetailPage from "./pages/SupplierDetailPage";
-import PurchaseOrdersPage from "./pages/PurchaseOrdersPage";
-import RecommendationsPage from "./pages/RecommendationsPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import FulfillmentPage from "./pages/FulfillmentPage";
+import InsightsPage from "./pages/InsightsPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 // Heavy, less-frequently-visited pages load on demand (xlsx is ~1MB).
 const DataQualityPage = lazy(() => import("./pages/DataQualityPage"));
 const ImportPageLazy = lazy(() => import("./pages/ImportPage"));
-const ControlTowerPage = lazy(() => import("./pages/ControlTowerPage"));
+const DeliveryPage = lazy(() => import("./pages/DeliveryPage"));
+const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 const ScenarioSimulatorPage = lazy(() => import("./pages/ScenarioSimulatorPage"));
-const ProcurementPage = lazy(() => import("./pages/ProcurementPage"));
+const IntelligencePage = lazy(() => import("./pages/IntelligencePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,20 +68,25 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
                   <Route path="/" element={<DashboardPage />} />
-                  <Route path="/control-tower" element={<Suspense fallback={<PageFallback />}><ControlTowerPage /></Suspense>} />
                   <Route path="/inventory" element={<InventoryPage />} />
                   <Route path="/products/:id" element={<ProductDetailPage />} />
                   <Route path="/forecast" element={<ForecastPage />} />
+                  <Route path="/fulfillment" element={<FulfillmentPage />} />
+                  <Route path="/delivery" element={<Suspense fallback={<PageFallback />}><DeliveryPage /></Suspense>} />
+                  <Route path="/returns" element={<Suspense fallback={<PageFallback />}><ReturnsPage /></Suspense>} />
                   <Route path="/simulator" element={<Suspense fallback={<PageFallback />}><ScenarioSimulatorPage /></Suspense>} />
-                  <Route path="/procurement" element={<Suspense fallback={<PageFallback />}><ProcurementPage /></Suspense>} />
+                  <Route path="/intelligence" element={<Suspense fallback={<PageFallback />}><IntelligencePage /></Suspense>} />
                   <Route path="/suppliers" element={<SuppliersPage />} />
                   <Route path="/suppliers/:id" element={<SupplierDetailPage />} />
-                  <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-                  <Route path="/recommendations" element={<RecommendationsPage />} />
-                  <Route path="/analytics" element={<AnalyticsPage />} />
-                  <Route path="/import" element={<Suspense fallback={<PageFallback />}><ImportPageLazy /></Suspense>} />
+                  <Route path="/insights" element={<InsightsPage />} />
                   <Route path="/data-quality" element={<Suspense fallback={<PageFallback />}><DataQualityPage /></Suspense>} />
+                  <Route path="/import" element={<Suspense fallback={<PageFallback />}><ImportPageLazy /></Suspense>} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  {/* Repositioning-era aliases: old links keep working. */}
+                  <Route path="/control-tower" element={<Navigate to="/" replace />} />
+                  <Route path="/analytics" element={<Navigate to="/intelligence" replace />} />
+                  <Route path="/procurement" element={<Navigate to="/intelligence" replace />} />
+                  <Route path="/recommendations" element={<Navigate to="/insights" replace />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
               </Routes>

@@ -119,7 +119,7 @@ export default function ScenarioSimulatorPage() {
   return (
     <div>
       <PageHeader
-        title="Scenario Simulator"
+        title="Scenario Lab"
         subtitle="What-if analysis on real inventory math — every output recalculates server-side."
         right={options.data && (
           <Select value={effectiveId ?? ""} onChange={(e) => { setProductId(Number(e.target.value)); setSaved([]); }} className="w-60" aria-label="Product">

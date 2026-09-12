@@ -1,11 +1,23 @@
 """Products, inventory, and forecast endpoints."""
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 
 from app.database.session import get_db
+from app.models import Category, Product
 from app.services.product_service import list_products, product_audit, product_detail, product_options
 from app.services.settings_service import get_value
 
 router = APIRouter(tags=["products"])
+
+
+@router.get("/meta/categories")
+def meta_categories(db=Depends(get_db)):
+    """Distinct categories that actually have products — drives filter dropdowns."""
+    rows = db.execute(
+        select(Category.name).join(Product, Product.category_id == Category.id)
+        .distinct().order_by(Category.name)
+    ).scalars().all()
+    return {"items": rows}
 
 
 @router.get("/products")

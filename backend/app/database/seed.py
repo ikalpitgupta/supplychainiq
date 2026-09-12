@@ -22,16 +22,16 @@ DAYS = 365
 END_DATE = date.today() - timedelta(days=1)  # seed ends yesterday; "today" has no partial data
 
 CATEGORY_SPECS: list[dict] = [
+    # Fashion e-commerce assortment (Myntra-style marketplace), ordered by
+    # demand weight: apparel first, then footwear/beauty, then adjacencies.
     # name, unit-cost range (₹), margin range, demand scale (units/day), weekend uplift
-    {"name": "Electronics", "cost": (400, 18000), "margin": (1.25, 1.5), "demand": (1.2, 9), "weekend": 1.15},
-    {"name": "Home Appliances", "cost": (700, 9000), "margin": (1.3, 1.6), "demand": (0.8, 5), "weekend": 1.2},
-    {"name": "Fashion", "cost": (200, 2500), "margin": (1.6, 2.2), "demand": (2, 12), "weekend": 1.35},
-    {"name": "Grocery", "cost": (20, 400), "margin": (1.2, 1.5), "demand": (8, 40), "weekend": 1.1},
-    {"name": "Beauty", "cost": (80, 1200), "margin": (1.5, 2.0), "demand": (1.5, 9), "weekend": 1.15},
-    {"name": "Sports", "cost": (300, 4000), "margin": (1.4, 1.8), "demand": (1, 6), "weekend": 1.3},
-    {"name": "Office Supplies", "cost": (40, 900), "margin": (1.3, 1.7), "demand": (2, 14), "weekend": 0.7},
-    {"name": "Accessories", "cost": (60, 1500), "margin": (1.6, 2.2), "demand": (2, 11), "weekend": 1.25},
-    {"name": "Furniture", "cost": (1500, 15000), "margin": (1.3, 1.7), "demand": (0.3, 2), "weekend": 1.2},
+    {"name": "Fashion", "cost": (180, 3500), "margin": (1.6, 2.4), "demand": (2.5, 14), "weekend": 1.45},
+    {"name": "Footwear", "cost": (350, 4500), "margin": (1.55, 2.1), "demand": (1.5, 9), "weekend": 1.4},
+    {"name": "Beauty", "cost": (80, 1400), "margin": (1.6, 2.3), "demand": (1.5, 10), "weekend": 1.25},
+    {"name": "Accessories", "cost": (60, 1800), "margin": (1.7, 2.4), "demand": (2, 10), "weekend": 1.35},
+    {"name": "Bags & Luggage", "cost": (250, 3200), "margin": (1.5, 2.0), "demand": (0.8, 6), "weekend": 1.3},
+    {"name": "Sportswear", "cost": (200, 2800), "margin": (1.5, 1.95), "demand": (1, 7), "weekend": 1.3},
+    {"name": "Home & Living", "cost": (150, 3000), "margin": (1.45, 1.9), "demand": (0.8, 5), "weekend": 1.2},
     {"name": "Personal Care", "cost": (50, 700), "margin": (1.4, 1.9), "demand": (2, 13), "weekend": 1.1},
 ]
 
@@ -39,15 +39,16 @@ CATEGORY_SPECS: list[dict] = [
 # fixed economic parameters (within the seed's own deterministic discipline) so
 # the resulting analytics tell the intended story — but every classification is
 # still computed at runtime by the analytics layer from the seeded rows.
-SIGNATURE_PRODUCTS = {"Electronics": ["Wireless Mouse", "27in Monitor"],
-                      "Office Supplies": ["Laptop Bag"],
-                      "Home Appliances": ["Air Fryer 4L"]}
+SIGNATURE_PRODUCTS = {"Fashion": ["Festive Kurta Set"],
+                      "Footwear": ["Chunky Sneakers"],
+                      "Beauty": ["Vitamin C Face Serum"]}
 
 # Fixed spec for the marquee demo scenario (see README §Demo Scenario):
-# Laptop Bag: ~20/day demand, 10-day lead time, ~120 units left, spike recently
-# passed -> projected stock-out BEFORE replenishment arrives -> CRITICAL / ORDER NOW.
+# Festive Kurta Set: ~20/day demand, 10-day lead time, ~120 units left, spike
+# recently passed -> projected stock-out BEFORE replenishment arrives ->
+# CRITICAL / ORDER NOW. (Fashion hero SKU: festive-season demand spike story.)
 SIGNATURE_SPECS: dict[str, dict] = {
-    "Laptop Bag": {
+    "Festive Kurta Set": {
         "base_daily": 20.0, "trend": 0.10, "spike_start": 325, "spike_mult": 1.30,
         "closing_stock": 200, "opening_stock": 240, "order_qty": 500,
         "unit_cost": 640.0, "margin": 1.65, "lead_time_days": 10,
@@ -55,54 +56,47 @@ SIGNATURE_SPECS: dict[str, dict] = {
 }
 
 PRODUCT_NAMES: dict[str, list[str]] = {
-    "Electronics": ["Wireless Mouse", "Mechanical Keyboard", "27in Monitor", "USB-C Hub", "Bluetooth Speaker",
-                    "Noise-Cancel Headphones", "Smart Watch", "Tablet 10in", "Power Bank 20K", "Webcam HD",
-                    "Wireless Earbuds", "External SSD 1TB", "HDMI Cable 2m", "Phone Stand", "LED Ring Light",
-                    "Router AC1200", "Graphics Tablet", "Laptop Cooling Pad", "Smart Bulb", "Action Camera"],
-    "Home Appliances": ["Air Fryer 4L", "Steam Iron", "Mixer Grinder", "Electric Kettle", "Vacuum Cleaner",
-                        "Rice Cooker", "Water Purifier", "Ceiling Fan", "Toaster 2-Slice", "Immersion Blender",
-                        "Room Heater", "Air Cooler", "Hand Blender", "Sandwich Maker", "Coffee Maker",
-                        "Humidifier", "Deep Fryer", "Chimney Filter", "Induction Cooktop", "Juicer"],
-    "Fashion": ["Cotton T-Shirt", "Denim Jacket", "Running Shoes", "Formal Shirt", "Summer Dress",
-                "Hoodie Fleece", "Chino Trousers", "Leather Belt", "Polo Shirt", "Track Pants",
-                "Kurti Set", "Blazer Navy", "Sneakers White", "Woolen Sweater", "Cargo Shorts",
-                "Silk Scarf", "Rain Jacket", "Linen Kurta", "Athletic Socks", "Party Dress"],
-    "Grocery": ["Basmati Rice 5kg", "Olive Oil 1L", "Green Tea 250g", "Almonds 500g", "Honey 500g",
-                "Wheat Flour 5kg", "Brown Sugar 1kg", "Pasta Penne 500g", "Peanut Butter 350g", "Oats 1kg",
-                "Coffee Beans 250g", "Dark Chocolate 90%", "Tomato Ketchup", "Coconut Water 12pk", "Protein Bars",
-                "Chia Seeds 200g", "Ghee 1L", "Masala Spice Set", "Fruit Jam 400g", "Green Moong 1kg"],
-    "Beauty": ["Face Serum", "Sunscreen SPF50", "Lipstick Matte", "Shampoo Argan", "Face Moisturizer",
-               "Perfume 50ml", "Hair Dryer", "Nail Polish Set", "Face Mask Pack", "Body Lotion",
-               "Kajal Eyeliner", "Beard Oil", "Makeup Brush Set", "Anti-Dandruff Shampoo", "Toner Rose",
-               "Lip Balm SPF", "Charcoal Soap", "Hair Serum", "BB Cream", "Eye Shadow Palette"],
-    "Sports": ["Yoga Mat 6mm", "Dumbbell Set 10kg", "Football Size 5", "Badminton Racket", "Cricket Bat",
-               "Resistance Bands", "Jump Rope", "Cycling Helmet", "Tennis Balls 3pk", "Gym Gloves",
-               "Foam Roller", "Basketball Indoor", "Swimming Goggles", "Wrist Weights", "Kettlebell 8kg",
-               "Table Tennis Set", "Ankle Support", "Camping Tent 2P", "Sleeping Bag", "Skateboard"],
-    "Office Supplies": ["A4 Paper Ream", "Gel Pen Pack", "Sticky Notes", "Binder Clips", "Whiteboard Marker",
-                        "Stapler Heavy", "Folder File Pack", "Envelopes 50pk", "Desk Organizer", "Laptop Bag",
-                        "Calculator Scientific", "Highlighter Set", "Notebook A5 3pk", "Scissors Steel",
-                        "Tape Dispenser", "Push Pins", "Rubber Bands", "Marker Permanent", "Label Maker", "Clipboard"],
-    "Accessories": ["Phone Case Clear", "Screen Protector", "Canvas Backpack", "Sunglasses UV400", "Travel Wallet",
-                    "Keychain Metal", "Watch Strap 22mm", "Cable Organizer", "Camera Strap", "Tote Bag",
-                    "Passport Cover", "Luggage Tag", "Belt Bag", "Card Holder RFID", "Gaming Mousepad",
-                    "Headphone Stand", "Tripod Mini", "Water Bottle 1L", "Umbrella Compact", "Hat Baseball"],
-    "Furniture": ["Office Chair Ergo", "Study Desk 120cm", "Bookshelf 4-Tier", "Coffee Table", "Bedside Table",
-                  "TV Unit Oak", "Dining Chair", "Wardrobe 2-Door", "Sofa 3-Seater", "Filing Cabinet",
-                  "Recliner Chair", "Standing Desk", "Shoe Rack 5-Tier", "Console Table", "Bar Stool",
-                  "Bed Frame Queen", "Dresser Mirror", "Corner Shelf", "Gaming Chair", "Futon Sofa Bed"],
-    "Personal Care": ["Electric Toothbrush", "Toothpaste Herbal", "Bath Towel Set", "Hair Conditioner",
-                      "Shaving Razor 4pk", "Deodorant Spray", "Face Wash Neem", "Body Wash Citrus",
+    "Fashion": ["Festive Kurta Set", "Floral Maxi Dress", "Slim Fit Jeans", "Oversized T-Shirt", "Linen Shirt",
+                "Anarkali Gown", "Denim Jacket", "Pleated Skirt", "Chikankari Kurta", "Palazzo Pants",
+                "Relaxed Cargo Pants", "Bodycon Party Dress", "Rayon Co-ord Set", "Cotton Jumpsuit",
+                "Silk Blend Saree", "Hooded Sweatshirt", "Poplin Shirt Dress", "Wide-Leg Trousers",
+                "Printed Kaftan", "Chino Shorts"],
+    "Footwear": ["Chunky Sneakers", "White Court Sneakers", "Running Shoes", "Block Heels", "Kolhapuri Sandals",
+                 "Tan Loafers", "Ankle Boots", "Ballet Flats", "Slip-On Sneakers", "Knit Joggers",
+                 "Sports Sandals", "Oxford Formal Shoes", "Wedge Sandals", "Canvas Sneakers", "Heeled Mules",
+                 "Trail Shoes", "EVA Flip Flops", "Platform Heels", "Embroidered Mojaris", "Football Studs"],
+    "Beauty": ["Vitamin C Face Serum", "Sunscreen SPF50", "Lipstick Matte", "Shampoo Argan", "Face Moisturizer",
+               "Perfume 50ml", "Nail Polish Set", "Sheet Mask Pack", "Body Lotion", "Kajal Eyeliner",
+               "Lip Oil Tint", "Makeup Brush Set", "Anti-Dandruff Shampoo", "Toner Rose", "Lip Balm SPF",
+               "Charcoal Soap", "Hair Serum", "BB Cream", "Eye Shadow Palette", "Setting Spray"],
+    "Accessories": ["Layered Necklace", "Sunglasses UV400", "Leather Belt", "Silk Scarf", "Analog Watch",
+                    "Hoop Earrings", "Charm Bracelet", "Ring Stack Set", "Hair Claw Clips", "Beanie Cap",
+                    "Socks 3pk", "Scrunchie Set", "Silk Tie", "Cufflinks Brass", "Baseball Cap",
+                    "Bandana Print", "Silver Anklet", "Vintage Brooch", "Straw Hat", "Phone Sling"],
+    "Bags & Luggage": ["Canvas Tote Bag", "Mini Backpack", "Laptop Tote", "Evening Clutch", "Sling Bag",
+                       "Weekender Duffel", "Bi-Fold Wallet", "Passport Cover", "Crossbody Bag", "Cabin Trolley 55cm",
+                       "Card Holder RFID", "Bucket Bag", "Drawstring Backpack", "Jute Tote", "Pouch Organiser",
+                       "Belt Bag", "Structured Handbag", "Luggage Tag", "Gym Duffel", "Puffy Tote"],
+    "Sportswear": ["Yoga Leggings", "Training T-Shirt", "Gym Shorts", "Sports Bra", "Track Jacket",
+                   "Seamless Leggings", "Running Tights", "Compression Tee", "Gym Tank", "Windbreaker",
+                   "Wicking Socks 2pk", "Training Gloves", "Yoga Mat 6mm", "Speed Jump Rope", "Dumbbell Pair 5kg",
+                   "Shaker Bottle 700ml", "Ankle Support", "Swim Goggles", "Badminton Racket", "Cycling Helmet"],
+    "Home & Living": ["Queen Bedsheet Set", "Cushion Cover 5pk", "Scented Candle", "Ceramic Mug Set", "Wall Art Print",
+                      "Storage Basket", "Table Runner", "Dinner Set 16pc", "Ceramic Planter", "Photo Frame Set",
+                      "String Lights", "Woven Rug 3x5", "Sheer Curtains 2pc", "Wooden Table Lamp", "Bath Towel Set",
+                      "Kitchen Jar Set", "Cork Coasters 6pk", "Glass Vase", "Serving Tray Wooden", "Throw Blanket"],
+    "Personal Care": ["Electric Toothbrush", "Herbal Toothpaste", "Bath Towel Set", "Hair Conditioner",
+                      "Shaving Razor 4pk", "Deodorant Spray", "Neem Face Wash", "Citrus Body Wash",
                       "Hand Sanitizer", "Cotton Buds 200pk", "Foot Cream", "Dental Floss", "Loofah Pack",
                       "Bath Sponge", "Talcum Powder", "Mouthwash 500ml", "Hair Gel", "Sunscreen Gel",
                       "Lip Care Winter", "Knee Support"],
 }
 
 SUPPLIER_NAMES = [
-    "Nexus Components Pvt Ltd", "OrbitTraders Global", "VegaSupply Co", "PrimeSource Industries",
-    "BlueRiver Imports", "Vertex Goods LLP", "SummitWorks Trading", "Aurora Distributors",
-    "Quantum Retail Supply", "EastBridge Traders", "MetroWholesale Hub", "Sterling Procurement",
-    "Sunrise Logistics Ltd", "IronClad Vendors", "Zenith Supply Partners",
+    "Arvind Textiles Pvt Ltd", "Bombay Fashions Hub", "Kalathur Weaves", "UrbanStitch Apparel",
+    "GlowCare Cosmetics", "SoleCraft Footwear", "Aura Beauty Labs", "Zen Leather Goods",
+    "LoomAndLoop Knitwear", "PearlRoute Jewellery", "Denimo Mills", "Verve Activewear",
+    "HomeAura Living", "SilkRoute Traders", "Metro Garments Co",
 ]
 
 REGIONS = ["North", "South", "East", "West"]

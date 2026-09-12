@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
-  BarChart3, Clock, Layers, PackageSearch, PieChart, ShieldAlert, TrendingUp, Truck,
+  BarChart3, Clock, Gauge, Layers, Lightbulb, PackageSearch, PieChart, ShieldAlert, Timer, TrendingUp, Truck,
 } from "lucide-react";
-import { intelligenceApi } from "../api/endpoints";
-import { Badge, Card, CardBody, CardHeader, ErrorState, Skeleton, Table, TD, TH, THead, TR } from "../components/ui";
-import { PageHeader } from "../components/shared";
+import { analyticsApi, intelligenceApi } from "../api/endpoints";
+import type { AnalyticsData } from "../types";
+import { Badge, Card, CardBody, CardHeader, EmptyState, ErrorState, Skeleton, Table, TD, TH, THead, TR } from "../components/ui";
+import { PageHeader, SeverityBadge } from "../components/shared";
 import { Stagger, StaggerItem } from "../components/motion";
-import { formatINR, formatNumber } from "../utils/format";
+import { formatINR, formatNumber, formatPct } from "../utils/format";
 
 const SEGMENT_TONES: Record<string, "green" | "blue" | "yellow" | "red" | "gray" | "violet"> = {
   AX: "green", AY: "blue", AZ: "yellow", BX: "blue", BY: "gray", BZ: "yellow",
@@ -32,6 +33,86 @@ function ConcentrationBar({ shares }: { shares: { supplier_id: number; supplier:
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+function InsightsPanel() {
+  const q = useQuery({
+    queryKey: ["analytics-insights"],
+    queryFn: () => analyticsApi.get(365),
+    select: (d: AnalyticsData) => d.insights,
+  });
+  return (
+    <Card>
+      <CardHeader
+        icon={<Lightbulb size={15} aria-hidden />}
+        title="What should the business know today?"
+        subtitle="Computed from live data — every line cites its number"
+      />
+      <CardBody className="grid gap-3 md:grid-cols-2">
+        {q.isLoading && <Skeleton className="h-24 w-full md:col-span-2" />}
+        {q.isError && <ErrorState message="Failed to load insights." onRetry={() => q.refetch()} />}
+        {q.data && q.data.length === 0 && <EmptyState title="No insights yet" message="Insights appear as data patterns emerge." />}
+        {q.data?.map((i) => (
+          <div key={i.title} className="rounded-xl border border-ink/10 p-3">
+            <div className="flex items-center gap-2">
+              <SeverityBadge severity={i.severity} />
+              <p className="text-xs font-semibold text-ink">{i.title}</p>
+            </div>
+            <p className="mt-1.5 text-xs leading-relaxed text-ink/70">{i.text}</p>
+            <Link to={i.link} className="mt-1 inline-block text-xs font-medium text-brand-600 hover:underline">Investigate →</Link>
+          </div>
+        ))}
+      </CardBody>
+    </Card>
+  );
+}
+
+function EfficiencyPanels() {
+  const q = useQuery({ queryKey: ["analytics"], queryFn: () => analyticsApi.get(365) });
+  if (q.isError) return <Card><ErrorState message={(q.error as Error)?.message || "Failed to load efficiency metrics"} onRetry={() => q.refetch()} /></Card>;
+  const d = q.data;
+  return (
+    <>
+      <Card>
+        <CardHeader icon={<Gauge size={15} aria-hidden />} title="Inventory efficiency" subtitle="How fast stock converts to sales — and what sitting stock costs." />
+        <CardBody>
+          {q.isLoading || !d ? <Skeleton className="h-24 w-full" /> : (
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+              <MiniStat label="Turnover" value={d.inventory.turnover ? `${d.inventory.turnover}x` : "—"} hint="COGS ÷ average inventory." />
+              <MiniStat label="Days Inventory" value={d.inventory.days_inventory_outstanding ? `${d.inventory.days_inventory_outstanding}` : "—"} hint="Average days a unit sits in stock (DIO)." />
+              <MiniStat label="Avg Inventory Value" value={formatINR(d.inventory.avg_inventory_value)} hint="Mean daily inventory value over the period." />
+              <MiniStat label="Holding Cost / yr" value={formatINR(d.inventory.holding_cost_annual)} hint="Average inventory × holding-cost rate (demo assumption)." />
+              <MiniStat label="Zero-Demand SKUs" value={formatNumber(d.inventory.zero_demand_products)} hint="No sales in the period — dead-stock candidates." />
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader icon={<Timer size={15} aria-hidden />} title="Fulfillment efficiency" subtitle="Purchase-order pipeline health over the last 12 months." />
+        <CardBody>
+          {q.isLoading || !d ? <Skeleton className="h-20 w-full" /> : (
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <MiniStat label="Open POs" value={formatNumber(d.efficiency.open_purchase_orders)} hint="Drafted, pending, ordered, or in transit." />
+              <MiniStat label="Delayed POs" value={formatNumber(d.efficiency.delayed_purchase_orders)} hint="Late against expected date — direct stock-out drivers." tone="red" />
+              <MiniStat label="Delay Rate" value={formatPct(d.efficiency.delayed_pct)} hint="Delayed ÷ total POs in the period." tone={(d.efficiency.delayed_pct ?? 0) > 15 ? "red" : "default"} />
+              <MiniStat label="Cancelled POs" value={formatNumber(d.efficiency.cancelled_purchase_orders)} hint="Cancelled orders in the period." />
+            </div>
+          )}
+        </CardBody>
+      </Card>
+    </>
+  );
+}
+
+function MiniStat({ label, value, hint, tone = "default" }: { label: string; value: string; hint: string; tone?: "default" | "red" }) {
+  return (
+    <div>
+      <p className="text-[11px] text-ink/50">{label}</p>
+      <p className={`font-display text-lg font-semibold ${tone === "red" ? "text-red-600 dark:text-red-400" : "text-ink"}`}>{value}</p>
+      <p className="text-[10px] leading-snug text-ink/40">{hint}</p>
     </div>
   );
 }
@@ -221,14 +302,14 @@ function SlowMoversPanel() {
   );
 }
 
-export default function ProcurementPage() {
+export default function IntelligencePage() {
   const proc = useQuery({ queryKey: ["procurement"], queryFn: intelligenceApi.procurement });
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Procurement Intelligence"
-        subtitle="Spend concentration, single-source dependencies, price drift, and negotiation levers — all computed from purchase-order history."
+        title="Intelligence"
+        subtitle="Where the business stands: inventory efficiency, spend concentration, single-source dependencies, price drift, and negotiation levers — all computed from live data."
         right={proc.data && (
           <div className="rounded-2xl bg-surface px-4 py-2.5 shadow-card">
             <p className="font-display text-xl font-semibold text-ink">{formatINR(proc.data.total_spend)}</p>
@@ -236,6 +317,10 @@ export default function ProcurementPage() {
           </div>
         )}
       />
+
+      <InsightsPanel />
+
+      <EfficiencyPanels />
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>

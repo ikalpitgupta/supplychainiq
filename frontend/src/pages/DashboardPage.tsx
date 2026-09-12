@@ -5,7 +5,7 @@ import {
   AlertTriangle, ArrowRight, Boxes, CheckCircle2, ClipboardList, Gauge, IndianRupee,
   Package, RefreshCw, ShoppingCart, Target, TrendingUp, Truck,
 } from "lucide-react";
-import { dashboardApi, recommendationsApi } from "../api/endpoints";
+import { dashboardApi, metaApi, recommendationsApi } from "../api/endpoints";
 import { useDashboardFilters } from "../hooks/useFilters";
 import {
   Button, Card, CardBody, CardHeader, EmptyState, ErrorState, InfoTip, Select, SkeletonCard, Tabs,
@@ -65,7 +65,9 @@ export default function DashboardPage() {
     select: (d) => d.items.filter((r) => r.severity !== "info").slice(0, 5),
   });
 
-  const categories = ["Electronics", "Home Appliances", "Fashion", "Grocery", "Beauty", "Sports", "Office Supplies", "Accessories", "Furniture", "Personal Care"];
+  // Category filter options come from the live meta endpoint (no hardcoded list).
+  const catsQ = useQuery({ queryKey: ["meta-categories"], queryFn: metaApi.categories, staleTime: 300_000 });
+  const categories = catsQ.data?.items ?? [];
 
   const k = dash.data?.kpis;
   const health = dash.data?.inventory_health ?? [];
@@ -274,7 +276,7 @@ export default function DashboardPage() {
                         title="What should we order, when, and from whom?"
                         subtitle="Top procurement recommendations"
                         icon={<ShoppingCart className="h-4 w-4" />}
-                        right={<Link to="/recommendations"><Button variant="secondary" size="sm">View all</Button></Link>}
+                        right={<Link to="/insights"><Button variant="secondary" size="sm">View all</Button></Link>}
                       />
                       <CardBody className="space-y-2.5">
                         {recs.isLoading && <SkeletonCard lines={3} />}
@@ -296,7 +298,7 @@ export default function DashboardPage() {
                             </div>
                             <div className="mt-2 flex gap-2">
                               <Link to={`/products/${r.product_id}`}><Button variant="secondary" size="sm">View Product</Button></Link>
-                              <Button variant="lime" size="sm" onClick={() => navigate(`/purchase-orders?create=${r.product_id}`)}>
+                              <Button variant="lime" size="sm" onClick={() => navigate(`/fulfillment?create=${r.product_id}`)}>
                                 <ClipboardList className="h-3.5 w-3.5" /> Create PO
                               </Button>
                             </div>

@@ -114,7 +114,7 @@ export default function DataQualityPage() {
                       </Link>
                     )}
                     {c.name === "Suppliers without orders" && c.issue_count > 0 && (
-                      <Link to="/purchase-orders" className="mt-2 inline-block text-[11px] font-medium text-brand-600 hover:text-brand-700">
+                      <Link to="/fulfillment" className="mt-2 inline-block text-[11px] font-medium text-brand-600 hover:text-brand-700">
                         Create a purchase order →
                       </Link>
                     )}
