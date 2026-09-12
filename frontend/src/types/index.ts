@@ -327,6 +327,7 @@ export interface ProductDetail {
   timeline: { reorder_point_day: number | null; safety_stock_day: number | null; stockout_day: number | null; lead_time_days: number };
   purchase_orders: POListItem[];
   formulas: Record<string, string>;
+  outbound: OutboundProductView | null;
 }
 
 export interface ForecastResponse {
@@ -431,6 +432,137 @@ export interface FulfillmentData {
   monthly: { month: string; orders: number; on_time: number; late: number; spend: number }[];
   late_orders: POListItem[];
   inbound: POListItem[];
+}
+
+/* ------------------------------ Outbound intelligence ------------------------------ */
+
+export interface SizeRiskRow {
+  size: string;
+  units: number;
+  d30_demand: number;
+  days_cover: number | null;
+  severity: "critical" | "warning";
+}
+
+export interface SizeAvailabilityItem {
+  product_id: number;
+  product: string;
+  sizes: Record<string, number>;
+  d30_demand_by_size: Record<string, number>;
+  at_risk: SizeRiskRow[];
+  lost_units_2w: number;
+  revenue_at_risk: number;
+}
+
+export interface SizeAvailabilityResponse {
+  window_days: number;
+  flagged_products: number;
+  revenue_at_risk: number;
+  items: SizeAvailabilityItem[];
+}
+
+export interface FulfillmentBottleneck {
+  window_days: number;
+  orders: number;
+  stages: { stage: string; avg_hours: number; share_pct: number }[];
+  bottleneck: string | null;
+  total_cycle_hours: number | null;
+  by_warehouse: { warehouse: string; pick_hours: number; pack_hours: number; dispatch_hours: number; orders: number }[];
+}
+
+export interface SlaBucket {
+  key: string;
+  delivered: number;
+  late: number;
+  late_rate_pct: number;
+  avg_late_days: number;
+}
+
+export interface DeliverySlaIntel {
+  window_days: number;
+  delivered: number;
+  late: number;
+  on_time_rate: number | null;
+  by_region: SlaBucket[];
+  by_warehouse: SlaBucket[];
+  by_carrier: SlaBucket[];
+  delay_reasons: { reason: string; count: number }[];
+}
+
+export interface RootCauseNode {
+  node: string;
+  evidence: string;
+  holds: boolean;
+}
+
+export interface RootCauseChain {
+  available: boolean;
+  message: string | null;
+  window_days: number;
+  headline: { late_rate_pct: number; delivered: number; cancelled: number; cancel_rate_pct: number } | null;
+  chain: RootCauseNode[];
+  warehouse_shares: Record<string, { share_pct: number; region: string }>;
+}
+
+export interface CustomerImpactWindow {
+  orders: number;
+  late_rate_pct: number | null;
+  cancel_rate_pct: number | null;
+  returns: number;
+  cancelled_revenue: number;
+}
+
+export interface CustomerImpact {
+  window_days: number;
+  prior: CustomerImpactWindow;
+  recent: CustomerImpactWindow;
+  findings: string[];
+}
+
+export interface ReturnsIntel {
+  window_days: number;
+  delivered_orders: number;
+  returns: number;
+  return_rate_pct: number | null;
+  by_reason: { reason: string; count: number }[];
+  by_category: { category: string; returns: number; return_rate_pct: number | null }[];
+  top_products: { product_id: number; product: string; returns: number; return_rate_pct: number | null }[];
+  by_disposition: Record<string, number>;
+}
+
+export interface OutboundAction {
+  problem: string;
+  root_cause: string;
+  recommendation: string;
+  impact: string;
+  cta: { label: string; to: string };
+}
+
+export interface OutboundActionsResponse {
+  window_days: number;
+  actions: OutboundAction[];
+}
+
+export interface OutboundProductView {
+  sized: boolean;
+  warehouses: string[];
+  variants: Record<string, { total: number; by_warehouse: Record<string, number> }>;
+  total_units: number;
+  size_risk: { at_risk: SizeRiskRow[]; revenue_at_risk: number } | null;
+  fulfillment: {
+    orders_90d: number;
+    delivered_90d: number;
+    late_rate_pct: number | null;
+    cancel_rate_pct: number | null;
+    avg_pick_hours: number | null;
+    avg_pack_hours: number | null;
+    avg_dispatch_hours: number | null;
+  };
+  returns: {
+    returns_90d: number;
+    return_rate_pct: number | null;
+    top_reasons: [string, number][];
+  };
 }
 
 /* ------------------------- Returns (honest placeholder) ------------------------ */

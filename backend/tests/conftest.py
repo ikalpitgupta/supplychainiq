@@ -33,9 +33,11 @@ def _seed_light(db) -> None:
     """Small deterministic dataset: 2 categories, 2 suppliers, 4 products, 60 days of data."""
     from datetime import date, timedelta
 
-    from app.models import Category, InventoryDaily, Product, PurchaseOrder, Sale, Setting, Supplier
+    from app.models import (Category, InventoryDaily, OutboundOrder, Product, PurchaseOrder,
+                            ReturnLine, Sale, Setting, Supplier, VariantInventory, Warehouse)
 
-    for model in (Sale, InventoryDaily, PurchaseOrder, Product, Supplier, Category, Setting):
+    for model in (ReturnLine, OutboundOrder, VariantInventory, Warehouse,
+                  Sale, InventoryDaily, PurchaseOrder, Product, Supplier, Category, Setting):
         db.query(model).delete()
     db.commit()
 
@@ -80,6 +82,69 @@ def _seed_light(db) -> None:
                                       received_quantity=0, sold_quantity=qty, closing_stock=stock))
     db.bulk_save_objects(sales)
     db.bulk_save_objects(inv)
+
+    # --- Outbound dataset (deterministic causal chain) ----------------------
+    # 2 DCs: North well-stocked, South starved (~14% of units). South orders
+    # distant-ship → longer dispatch → higher lateness/cancellation; returns
+    # land on delivered orders so return-rate math has a denominator.
+    wh_n = Warehouse(code="DEL", name="Delhi North DC", region="North")
+    wh_s = Warehouse(code="BLR", name="Bengaluru South DC", region="South")
+    db.add_all([wh_n, wh_s])
+    db.commit()
+
+    variant_objs = []
+    for p in products[:4]:
+        # XL is deliberately near-starved (1 unit network-wide) against an even
+        # demand rotation — the "XL approaching stock-out" case.
+        for size, (n_units, s_units) in (("M", (20, 4)), ("L", (20, 4)), ("XL", (1, 0))):
+            variant_objs.append(VariantInventory(product_id=p.id, size=size, warehouse_id=wh_n.id, units=n_units))
+            if s_units > 0:
+                variant_objs.append(VariantInventory(product_id=p.id, size=size, warehouse_id=wh_s.id, units=s_units))
+    db.add_all(variant_objs)
+    db.commit()
+
+    rng = __import__("random").Random(7)
+    order_objs = []
+    for i in range(40):
+        p = products[i % 4]
+        size = ("M", "L", "XL")[i % 3]          # demand rotates evenly across sizes
+        region = "South" if i % 2 == 0 else "North"
+        wh = wh_s if region == "South" else wh_n
+        order_day = date.today() - timedelta(days=i + 2)
+        promised = order_day + timedelta(days=3)
+        if region == "South":
+            disp, on_time, cancelled = 24.0, rng.random() < 0.4, rng.random() < 0.15
+        else:
+            disp, on_time, cancelled = 8.0, rng.random() < 0.9, rng.random() < 0.05
+        if cancelled:
+            status, delivered = "Cancelled", None
+        elif on_time:
+            status, delivered = "Delivered", promised
+        else:
+            status, delivered = "Delivered", promised + timedelta(days=2)
+        order_objs.append(OutboundOrder(
+            order_number=f"SO-T-{i:05d}", product_id=p.id, size=size, warehouse_id=wh.id,
+            region=region, quantity=2, revenue=round(2 * p.selling_price, 2),
+            order_date=order_day.isoformat(), promised_date=promised.isoformat(),
+            delivered_date=delivered.isoformat() if delivered else None,
+            pick_hours=2.0 if not cancelled else 2.0,
+            pack_hours=1.0 if not cancelled else None,
+            dispatch_hours=disp if status == "Delivered" else None,
+            carrier="BlueDart",
+            delay_reason=("Routed from distant DC" if (region == "South" and status == "Delivered" and not on_time)
+                          else ("Carrier delay" if (region == "North" and status == "Delivered" and not on_time) else None)),
+            status=status,
+        ))
+    db.add_all(order_objs)
+    db.commit()
+
+    delivered_rows = [o for o in order_objs if o.status == "Delivered"]
+    for j, o in enumerate(delivered_rows):
+        if j % 4 == 0:  # ~25% of delivered orders get a return
+            rdate = min(date.fromisoformat(o.delivered_date) + timedelta(days=3), date.today())
+            db.add(ReturnLine(order_id=o.id, product_id=o.product_id, return_date=rdate.isoformat(),
+                              reason="Size issue", disposition="Restock"))
+    db.commit()
 
     db.add_all([
         PurchaseOrder(po_number="PO-T-0001", product_id=products[0].id, supplier_id=s1.id,

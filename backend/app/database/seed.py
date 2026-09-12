@@ -15,7 +15,8 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.database.session import Base, db_manager
-from app.models import Category, InventoryDaily, Product, PurchaseOrder, Sale, Setting, Supplier, User
+from app.models import (Category, InventoryDaily, OutboundOrder, Product, PurchaseOrder,
+                        ReturnLine, Sale, Setting, Supplier, User, VariantInventory, Warehouse)
 
 RNG_SEED = 42
 DAYS = 365
@@ -100,6 +101,32 @@ SUPPLIER_NAMES = [
 ]
 
 REGIONS = ["North", "South", "East", "West"]
+
+# --- Outbound supply chain (fashion e-commerce) -----------------------------
+# Regional DCs; each customer region maps to its home warehouse.
+WAREHOUSE_ROWS: list[dict] = [
+    {"code": "DEL", "name": "Delhi North DC", "region": "North"},
+    {"code": "MUM", "name": "Mumbai West DC", "region": "West"},
+    {"code": "BLR", "name": "Bengaluru South DC", "region": "South"},
+    {"code": "CCU", "name": "Kolkata East DC", "region": "East"},
+]
+REGION_HOME_DC = {"North": "DEL", "West": "MUM", "South": "BLR", "East": "CCU"}
+REGION_WAREHOUSE_SHARE = {"North": 0.32, "West": 0.28, "South": 0.22, "East": 0.18}
+
+SIZE_WEIGHTS: dict[str, float] = {"XS": 0.06, "S": 0.16, "M": 0.26, "L": 0.26, "XL": 0.17, "XXL": 0.09}
+SIZED_CATEGORIES = {"Fashion", "Footwear", "Sportswear"}
+CARRIERS = ["BlueDart", "Delhivery", "Ekart", "XpressBees"]
+
+# Category-level return-rate experience, used to seed returns so the measured
+# rates in the app land near realistic fashion e-commerce levels.
+RETURN_RATE_BY_CATEGORY: dict[str, float] = {
+    "Fashion": 0.22, "Footwear": 0.26, "Sportswear": 0.18, "Accessories": 0.10,
+    "Bags & Luggage": 0.09, "Home & Living": 0.07, "Beauty": 0.04, "Personal Care": 0.04,
+}
+RETURN_REASONS_SIZED = [("Size issue", 0.38), ("Fit issue", 0.22), ("Quality concern", 0.14),
+                        ("Not as described", 0.14), ("Changed mind", 0.12)]
+RETURN_REASONS_ONE_SIZE = [("Quality concern", 0.30), ("Not as described", 0.28),
+                           ("Changed mind", 0.26), ("Damaged in transit", 0.16)]
 
 SETTING_DEFAULTS: list[tuple[str, str, str, str]] = [
     ("service_level", "0.95", "float", "Service level (cycle) — Z=1.65 at 95%"),
@@ -275,7 +302,8 @@ def seed_demo_data() -> dict:
     db = db_manager.sessionmaker()()
 
     # Wipe (order matters for FKs; SQLite has FKs off by default, Postgres enforced).
-    for model in (Sale, InventoryDaily, PurchaseOrder, Product, Supplier, Category, User, Setting):
+    for model in (ReturnLine, OutboundOrder, VariantInventory, Warehouse,
+                  Sale, InventoryDaily, PurchaseOrder, Product, Supplier, Category, User, Setting):
         db.execute(delete(model))
     db.commit()
 
@@ -469,6 +497,140 @@ def seed_demo_data() -> dict:
     db.bulk_save_objects(sales_objs)
     db.bulk_save_objects(inv_objs)
 
+    # ------------------------------------------------------------------
+    # Outbound supply chain: warehouses, variant stock, customer orders,
+    # returns. This is the fashion e-commerce OUTBOUND story — inventory
+    # imbalance → longer routes → SLA breaches → cancellations/returns.
+    # ------------------------------------------------------------------
+    whs = [Warehouse(**w) for w in WAREHOUSE_ROWS]
+    db.add_all(whs)
+    db.flush()
+
+    cat_name_by_id = {c.id: c.name for c in categories}
+    prod_cat_name = {p.id: cat_name_by_id[p.category_id] for p in products}
+
+    # Variant inventory: split each product's closing stock across sizes and
+    # warehouses (sized categories by size weights; others "One Size"). The
+    # South DC deliberately holds only ~40% of its fair share → regional
+    # imbalance. Sums reconcile with the legacy ledger's closing stock.
+    variant_objs: list[VariantInventory] = []
+    stock_split: dict[int, dict[str, dict[int, int]]] = {}   # pid → size → wh_id → units
+    for p, sim in zip(products, sim_results):
+        total_units = max(0, int(sim["inv"][-1]["closing_stock"]))
+        if total_units == 0:
+            continue
+        sized = cat_name_by_id[p.category_id] in SIZED_CATEGORIES
+        sizes = list(SIZE_WEIGHTS) if sized else ["One Size"]
+        weights = [SIZE_WEIGHTS[s] for s in sizes] if sized else [1.0]
+        wsum = sum(weights)
+        shares_raw = [REGION_WAREHOUSE_SHARE[wh.region] * (0.4 if wh.code == "BLR" else 1.0) for wh in whs]
+        ssum = sum(shares_raw)
+        for size, w in zip(sizes, weights):
+            size_units = int(round(total_units * w / wsum))
+            for wid, share in enumerate(shares_raw):
+                units = int(round(size_units * share / ssum))
+                if units > 0:
+                    variant_objs.append(VariantInventory(
+                        product_id=p.id, size=size, warehouse_id=whs[wid].id, units=units))
+                    stock_split.setdefault(p.id, {}).setdefault(size, {})[whs[wid].id] = units
+    db.add_all(variant_objs)
+
+    # Outbound orders: last 90 days. Each order ships from the customer's home
+    # DC when that DC is reasonably stocked for the size; otherwise it is
+    # distant-routed (longer dispatch + more lateness) — the designed causal
+    # chain. Fulfillment stage durations live on the row so bottleneck analysis
+    # is computed, not asserted.
+    out_start = (END_DATE - timedelta(days=90)).isoformat()
+    order_objs: list[OutboundOrder] = []
+    delivered_orders: list[OutboundOrder] = []
+    order_seq = 0
+    for p, sim in zip(products, sim_results):
+        sized = cat_name_by_id[p.category_id] in SIZED_CATEGORIES
+        sizes = list(SIZE_WEIGHTS) if sized else ["One Size"]
+        size_probs = [SIZE_WEIGHTS[s] for s in sizes] if sized else [1.0]
+        for r in sim["inv"]:
+            if r["date"] < out_start or r["sold_quantity"] <= 0:
+                continue
+            lines = 1 if r["sold_quantity"] < 3 else 2
+            base = r["sold_quantity"] // lines
+            for ln in range(lines):
+                qty = base + (1 if ln < r["sold_quantity"] % lines else 0)
+                if qty <= 0:
+                    continue
+                order_seq += 1
+                region = REGIONS[int(rng.choice(4, p=[0.32, 0.28, 0.22, 0.18]))]
+                home = next(wh for wh in whs if wh.code == REGION_HOME_DC[region])
+                size = str(rng.choice(sizes, p=size_probs))
+                size_stock = stock_split.get(p.id, {}).get(size, {})
+                total_size = sum(size_stock.values()) or 1
+                local_share = size_stock.get(home.id, 0) / total_size
+                local = local_share >= 0.25          # home DC reasonably stocked?
+                order_day = date.fromisoformat(r["date"])
+                promised = order_day + timedelta(days=3)
+
+                pick_h = round(float(rng.uniform(1.4, 3.0)), 1)
+                pack_h = round(float(rng.uniform(0.5, 1.5)), 1)
+                disp_h = round(float(rng.uniform(5, 10)) if local else float(rng.uniform(20, 34)), 1)
+                carrier = str(rng.choice(CARRIERS))
+
+                roll = float(rng.random())
+                cancelled = roll < (0.16 if not local else 0.07)
+                recent = (END_DATE - order_day).days <= 3
+                if cancelled:
+                    status, delivered, reason = "Cancelled", None, "Stock unavailability at home DC" if not local else None
+                elif recent:
+                    status, delivered, reason = "In Progress", None, None
+                else:
+                    on_time = local and float(rng.random()) < 0.93 or (not local and float(rng.random()) < 0.55)
+                    if on_time:
+                        status, delivered, reason = "Delivered", promised, None
+                    else:
+                        status = "Delivered"
+                        delivered = promised + timedelta(days=int(rng.integers(1, 4)))
+                        if delivered > END_DATE:
+                            delivered = END_DATE
+                        if not local:
+                            reason = str(rng.choice(["Routed from distant DC", "Carrier delay"], p=[0.6, 0.4]))
+                        else:
+                            reason = str(rng.choice(["Carrier delay", "High volume at DC"], p=[0.7, 0.3]))
+                    if status == "Delivered":
+                        reason = reason if delivered and delivered > promised else None
+
+                o = OutboundOrder(
+                    order_number=f"SO-{order_day.strftime('%y%m')}-{order_seq:06d}",
+                    product_id=p.id, size=size, warehouse_id=home.id, region=region,
+                    quantity=qty, revenue=round(qty * p.selling_price, 2),
+                    order_date=r["date"], promised_date=promised.isoformat(),
+                    delivered_date=delivered.isoformat() if delivered else None,
+                    pick_hours=pick_h if not cancelled else round(pick_h, 1),
+                    pack_hours=pack_h if not cancelled else None,
+                    dispatch_hours=disp_h if status in ("Delivered", "Dispatched") and not cancelled else None,
+                    carrier=carrier, delay_reason=reason, status=status,
+                )
+                order_objs.append(o)
+                if status == "Delivered" and delivered:
+                    delivered_orders.append(o)
+    db.add_all(order_objs)
+    db.flush()
+
+    # Returns: measured from delivered orders using category return-rate
+    # experience, with reason mixes that differ for sized vs one-size goods.
+    return_objs: list[ReturnLine] = []
+    for o in delivered_orders:
+        rate = RETURN_RATE_BY_CATEGORY.get(prod_cat_name[o.product_id], 0.08)
+        if float(rng.random()) >= rate:
+            continue
+        sized = prod_cat_name[o.product_id] in SIZED_CATEGORIES
+        pool = RETURN_REASONS_SIZED if sized else RETURN_REASONS_ONE_SIZE
+        reason = str(rng.choice([r for r, _ in pool], p=[w for _, w in pool]))
+        rdate = min(date.fromisoformat(o.delivered_date) + timedelta(days=int(rng.integers(2, 6))), END_DATE)
+        return_objs.append(ReturnLine(
+            order_id=o.id, product_id=o.product_id, return_date=rdate.isoformat(),
+            reason=reason,
+            disposition=str(rng.choice(["Restock", "Refurbish", "Write-off"], p=[0.82, 0.12, 0.06])),
+        ))
+    db.add_all(return_objs)
+
     # Users + settings.
     db.add_all([
         User(name="Aarav Sharma", email="admin@supplychainiq.com", role="admin"),
@@ -496,6 +658,10 @@ def seed_demo_data() -> dict:
         "sales": db.scalar(select(func.count()).select_from(Sale)),
         "inventory_rows": db.scalar(select(func.count()).select_from(InventoryDaily)),
         "purchase_orders": db.scalar(select(func.count()).select_from(PurchaseOrder)),
+        "warehouses": db.scalar(select(func.count()).select_from(Warehouse)),
+        "variant_rows": db.scalar(select(func.count()).select_from(VariantInventory)),
+        "outbound_orders": db.scalar(select(func.count()).select_from(OutboundOrder)),
+        "returns": db.scalar(select(func.count()).select_from(ReturnLine)),
         "users": db.scalar(select(func.count()).select_from(User)),
     }
     db.close()

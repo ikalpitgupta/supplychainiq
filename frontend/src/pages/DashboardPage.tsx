@@ -13,10 +13,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "../components/motion";
 import {
   AlertTriangle, ArrowRight, ArrowUpRight, BadgeDollarSign, CheckCircle2, ClipboardList,
-  PackageSearch, RefreshCw, ShoppingCart, Target, TrendingUp, Truck,
+  PackageCheck, PackageSearch, RefreshCw, RotateCcw, ShoppingCart, Target, TrendingUp, Truck, XCircle,
 } from "lucide-react";
 import {
-  dashboardApi, fulfillmentApi, metaApi, recommendationsApi, returnsApi,
+  dashboardApi, fulfillmentApi, metaApi, outboundApi, recommendationsApi,
 } from "../api/endpoints";
 import { useDashboardFilters } from "../hooks/useFilters";
 import {
@@ -24,6 +24,7 @@ import {
 } from "../components/ui";
 import { KpiCard, PageHeader, SeverityBadge, StatusBadge } from "../components/shared";
 import { HealthScoreCard } from "../components/shared/HealthScoreCard";
+import { RootCauseChainCard } from "../components/shared/RootCauseChainCard";
 import { WhyModal } from "../components/shared/WhyModal";
 import type { WhyStep } from "../components/shared/WhyModal";
 import { DemandForecastChart, HealthDonut } from "../components/charts";
@@ -75,11 +76,20 @@ export default function DashboardPage() {
     staleTime: 60_000,
   });
 
+  // Measured returns from the outbound order book (replaces the old placeholder).
   const returns = useQuery({
-    queryKey: ["returns"],
-    queryFn: returnsApi.summary,
+    queryKey: ["returns-intel-90"],
+    queryFn: () => outboundApi.returnsIntel(90),
     staleTime: 300_000,
   });
+
+  // Customer-experience window: operations vs cancellations/returns.
+  const cxImpact = useQuery({
+    queryKey: ["outbound-customer-impact"],
+    queryFn: () => outboundApi.customerImpact(30),
+    staleTime: 60_000,
+  });
+  const ci = cxImpact.data;
 
   // Category filter options come from the live meta endpoint (no hardcoded list).
   const catsQ = useQuery({ queryKey: ["meta-categories"], queryFn: metaApi.categories, staleTime: 300_000 });
@@ -177,11 +187,12 @@ export default function DashboardPage() {
                 info={delivery.data?.avg_delay_days != null ? `Late POs average +${delivery.data.avg_delay_days.toFixed(1)} days against the expected date.` : "Delivered POs that arrived on or before the expected date."}
                 onWhy={() => setWhyKpi(kpiWhy("On-time Delivery", undefined,
                   "On-or-before-expected deliveries ÷ delivered POs in the window (inbound supplier delivery performance)."))} />
-              <KpiCard label="Return Rate" value={returns.data?.available ? "—" : "—"} unit="not tracked"
-                accent="ink"
-                info="No returns ledger exists in this dataset yet — measured return rates arrive with the returns feed (phase 2)."
+              <KpiCard label="Return Rate" value={returns.data?.return_rate_pct != null ? `${returns.data.return_rate_pct}%` : "—"}
+                accent={returns.data?.return_rate_pct != null && returns.data.return_rate_pct >= 20 ? "red" : returns.data?.return_rate_pct != null && returns.data.return_rate_pct >= 12 ? "yellow" : "green"}
+                numericValue={returns.data?.return_rate_pct ?? 0}
+                info={`Measured from the outbound order book: ${formatNumber(returns.data?.returns ?? 0)} returns across ${formatNumber(returns.data?.delivered_orders ?? 0)} delivered orders, last 90 days.`}
                 onWhy={() => setWhyKpi(kpiWhy("Return Rate", undefined,
-                  "The data model has no returns records, so no rate can be computed without inventing numbers. The Returns page shows which lines a feed should watch first."))} />
+                  `Measured returns ÷ delivered orders over 90 days — ${formatNumber(returns.data?.returns ?? 0)} of ${formatNumber(returns.data?.delivered_orders ?? 0)}. Sized categories (apparel, footwear) return at higher rates than one-size goods; see the Returns page for the category split.`))} />
               <KpiCard label="Revenue at Risk" value={formatINR(impact?.revenue_at_risk)} accent="red"
                 numericValue={impact?.revenue_at_risk} format={(n) => formatINR(n)}
                 info={`Estimated unmet sales before replenishment arrives${impact?.top_risk_category ? ` — concentrated in ${impact.top_risk_category}` : ""}.`}
@@ -284,6 +295,9 @@ export default function DashboardPage() {
                 </CardBody>
               </Card>
             </div>
+
+            {/* Interactive root-cause chain — every hop carries measured evidence. */}
+            <RootCauseChainCard days={30} />
           </Section>
 
           {/* ── Section 3 · What should I do? ──────────────────────────────── */}
@@ -365,6 +379,30 @@ export default function DashboardPage() {
 
           {/* ── Section 4 · What is the impact? ────────────────────────────── */}
           <Section heading="What is the impact?" lead="The financial footprint of the risks above — and the opportunity of fixing them.">
+            {ci && (
+              <Card className="mb-4">
+                <CardHeader
+                  title="How do operations show up for customers?"
+                  subtitle="Recent half of the 30-day window vs the prior half — stated only when both sides are measurable."
+                  icon={<Truck className="h-4 w-4" />}
+                />
+                <CardBody className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <ImpactStat label="Late delivery rate" tone="red" icon={<Truck className="h-4 w-4" />}
+                    value={ci.recent.late_rate_pct != null ? `${ci.recent.late_rate_pct}%` : "—"}
+                    note={ci.prior.late_rate_pct != null ? `prior half: ${ci.prior.late_rate_pct}%` : "no prior window"} />
+                  <ImpactStat label="Cancellation rate" tone="violet" icon={<XCircle className="h-4 w-4" />}
+                    value={ci.recent.cancel_rate_pct != null ? `${ci.recent.cancel_rate_pct}%` : "—"}
+                    note={`est. ₹${Math.round(ci.recent.cancelled_revenue / 1000)}K demand lost before dispatch`} />
+                  <ImpactStat label="Returns (30d)" tone="blue" icon={<RotateCcw className="h-4 w-4" />}
+                    value={formatNumber(ci.recent.returns)}
+                    note={ci.prior.returns ? `prior half: ${formatNumber(ci.prior.returns)}` : "no prior window"} />
+                  <ImpactStat label="Delivered orders" tone="green" icon={<PackageCheck className="h-4 w-4" />}
+                    value={formatNumber(ci.recent.orders)}
+                    note="customer orders in the recent half-window" />
+                </CardBody>
+              </Card>
+            )}
+
             <Card>
               <CardBody className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
                 <ImpactStat label="Revenue at Risk" value={formatINR(impact?.revenue_at_risk)}

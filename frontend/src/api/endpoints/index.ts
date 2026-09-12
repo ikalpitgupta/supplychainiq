@@ -1,10 +1,12 @@
 import { api, apiUpload } from "../client";
 import type {
   AbcXyzResponse, AnalyticsData, AnomaliesResponse, ControlTowerResponse,
-  CostCurveResponse, DashboardData, ForecastResponse, FulfillmentData, ImportReport,
-  InventoryAgingResponse, POFormContext, POListResponse, ProductDetail,
+  CostCurveResponse, CustomerImpact, DashboardData, DeliverySlaIntel, ForecastResponse, FulfillmentBottleneck,
+  FulfillmentData, ImportReport, InventoryAgingResponse, OutboundActionsResponse, ReturnsIntel,
+  POFormContext, POListResponse, ProductDetail,
   ProductListResponse, ProcurementIntelligenceResponse, RecommendationsResponse,
-  ReturnsSummary, ScenarioResponse, SettingsResponse, SlowMoversResponse, SupplierDetail,
+  ReturnsSummary, RootCauseChain, ScenarioResponse, SettingsResponse, SizeAvailabilityResponse,
+  SlowMoversResponse, SupplierDetail,
   SupplierListResponse, User, VelocityMatrixResponse,
 } from "../../types";
 
@@ -84,6 +86,16 @@ export const fulfillmentApi = {
 
 export const returnsApi = {
   summary: () => api<ReturnsSummary>("/returns/summary"),
+};
+
+export const outboundApi = {
+  sizeAvailability: () => api<SizeAvailabilityResponse>("/outbound/size-availability?limit=12"),
+  bottleneck: (days = 30) => api<FulfillmentBottleneck>(`/outbound/fulfillment-bottleneck?days=${days}`),
+  deliverySla: (days = 30) => api<DeliverySlaIntel>(`/outbound/delivery-sla?days=${days}`),
+  rootCause: (days = 30) => api<RootCauseChain>(`/outbound/root-cause?days=${days}`),
+  customerImpact: (days = 30) => api<CustomerImpact>(`/outbound/customer-impact?days=${days}`),
+  actions: (days = 30) => api<OutboundActionsResponse>(`/outbound/actions?days=${days}`),
+  returnsIntel: (days = 90) => api<ReturnsIntel>(`/outbound/returns?days=${days}`),
 };
 
 export const intelligenceApi = {

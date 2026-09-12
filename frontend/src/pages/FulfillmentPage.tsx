@@ -1,10 +1,10 @@
 import { Fragment, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { ChevronDown, Download, Plus } from "lucide-react";
-import { poApi } from "../api/endpoints";
+import { ChevronDown, Download, Plus, Timer } from "lucide-react";
+import { outboundApi, poApi } from "../api/endpoints";
 import { downloadCsv } from "../api/client";
-import { Badge, Button, Card, ConfirmDialog, Dialog, EmptyState, ErrorState, Input, Pagination, SkeletonRows, Table, TD, TH, THead, TR, Tabs } from "../components/ui";
+import { Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, Dialog, EmptyState, ErrorState, Input, Pagination, SkeletonRows, Table, TD, TH, THead, TR, Tabs } from "../components/ui";
 import { PageHeader } from "../components/shared";
 import { CreatePODialog } from "../components/shared/CreatePODialog";
 import { formatDate, formatINR, formatNumber } from "../utils/format";
@@ -34,6 +34,10 @@ export default function FulfillmentPage() {
     queryFn: () => poApi.list({ page, page_size: 15, status: status === "All" ? undefined : status, search: search || undefined }),
   });
 
+  // Outbound customer-order fulfillment: pick → pack → dispatch bottleneck.
+  const bottleneckQ = useQuery({ queryKey: ["outbound-bottleneck"], queryFn: () => outboundApi.bottleneck(30) });
+  const bn = bottleneckQ.data;
+
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     if (value && value !== "All") next.set(key, value);
@@ -60,10 +64,10 @@ export default function FulfillmentPage() {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Fulfillment"
-        subtitle="The replenishment pipeline — which orders are at risk, what they cost, and what to do next."
+        subtitle="Customer-order flow (pick → pack → dispatch) and the replenishment pipeline behind it."
         right={
           <>
             <Button variant="secondary" size="sm" onClick={async () => {
@@ -78,6 +82,59 @@ export default function FulfillmentPage() {
           </>
         }
       />
+
+      {/* Outbound fulfillment intelligence — where do customer orders slow down? */}
+      {bn && (
+        <Card>
+          <CardHeader
+            icon={<Timer size={15} aria-hidden />}
+            title="Where do customer orders slow down?"
+            subtitle={bn.total_cycle_hours
+              ? `Average order-to-dispatch cycle: ${bn.total_cycle_hours}h across ${bn.orders} orders (last ${bn.window_days} days). Bottleneck: ${bn.bottleneck}.`
+              : "Stage timings from customer orders in the window."}
+          />
+          <CardBody>
+            <div className="grid gap-5 lg:grid-cols-2">
+              <div>
+                <div className="mb-3 flex h-3 w-full overflow-hidden rounded-full bg-ink/10" role="img"
+                  aria-label={`Cycle time split: ${bn.stages.map((s) => `${s.stage} ${s.share_pct}%`).join(", ")}`}>
+                  {bn.stages.map((s, i) => (
+                    <div key={s.stage}
+                      className={i === 0 ? "bg-brand-500" : i === 1 ? "bg-amber-400" : "bg-red-400"}
+                      style={{ width: `${s.share_pct}%` }}
+                      title={`${s.stage}: ${s.avg_hours}h`} />
+                  ))}
+                </div>
+                <div className="space-y-1.5">
+                  {bn.stages.map((s, i) => (
+                    <div key={s.stage} className="flex items-center justify-between rounded-xl border border-ink/10 px-3 py-2 text-xs">
+                      <span className="flex items-center gap-2 font-medium text-ink">
+                        <span className={`h-2 w-2 rounded-full ${i === 0 ? "bg-brand-500" : i === 1 ? "bg-amber-400" : "bg-red-400"}`} aria-hidden />
+                        {s.stage}
+                        {s.stage === bn.bottleneck && <Badge tone="red">bottleneck</Badge>}
+                      </span>
+                      <span className="text-ink/60">{s.avg_hours}h avg · {s.share_pct}% of cycle</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-ink/40">By warehouse</p>
+                <div className="space-y-1.5">
+                  {bn.by_warehouse.map((w) => (
+                    <div key={w.warehouse} className="flex items-center justify-between rounded-xl border border-ink/10 px-3 py-2 text-xs">
+                      <span className="font-medium text-ink">{w.warehouse}</span>
+                      <span className="text-ink/60">
+                        pick {w.pick_hours}h · pack {w.pack_hours}h · <strong className={w.dispatch_hours > 15 ? "text-red-500" : "text-ink"}>dispatch {w.dispatch_hours}h</strong>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-ink/10 p-4">
@@ -172,6 +229,10 @@ export default function FulfillmentPage() {
           )
         )}
       </Card>
+
+      <h2 className="border-t border-ink/10 pt-2 font-display text-sm font-semibold uppercase tracking-widest text-ink/70">
+        Inbound · replenishment orders
+      </h2>
 
       {/* Detail dialog with status actions */}
       <Dialog open={!!detail} onClose={() => setDetail(null)} title={detail ? `Purchase order ${detail.po_number}` : ""}>

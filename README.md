@@ -39,12 +39,13 @@ Both failures come from the same blind spot: the gap between *how long stock las
 
 | Area (nav) | What you get |
 |---|---|
-| **Command Center** | 6 live KPIs with period deltas, health score with component breakdown, demand-vs-forecast chart (7d/30d/90d/12m), anomaly-aware insights, critical alerts, top actions, dynamically generated executive summary; operational + executive views |
-| **Inventory** | Search, category/status/supplier filters, sorting, pagination, CSV export; clicking the health donut filters the table |
+| **Command Center** | 6 live KPIs with period deltas, health score with component breakdown, demand-vs-forecast chart (7d/30d/90d/12m), anomaly-aware insights, interactive root-cause chain (demand → inventory imbalance → distant routing → SLA breach, every hop measured), customer-impact strip (late deliveries ↔ cancellations/returns), critical alerts, top actions, dynamically generated executive summary |
+| **Inventory** | Search, category/status/supplier filters, sorting, pagination, CSV export; clicking the health donut filters the table; product pages add a size × warehouse availability matrix with color-coded cells |
 | **Demand Forecast** | Product/category selection, 7/30/90-day horizons, confidence intervals, backtested MAE/RMSE/MAPE, method disclosure |
-| **Fulfillment** | Purchase-order lifecycle management: statuses, guided create form with live stock context, supplier-linked pipeline — the upstream half of the journey |
-| **Delivery** | Inbound supplier delivery performance: on-time rate, average lead time, average delay, monthly delivery rhythm, late-order accountability, inbound pipeline, purchase-price integrity |
-| **Returns** | Honest data-gap disclosure plus return-*exposure* bands per top-selling line (clearly labeled indicative benchmarks, never fabricated rates) and links to the upstream drivers already tracked |
+| **Fulfillment** | Purchase-order lifecycle management: statuses, guided create form with live stock context, supplier-linked pipeline; plus **outbound bottleneck intelligence** — pick → pack → dispatch cycle split, the identified bottleneck stage, and per-warehouse comparison from 15k+ customer orders |
+| **Delivery** | Inbound supplier delivery performance (on-time rate, lead times, late-order accountability) plus **outbound SLA intelligence**: on-time rate, late rate by region / warehouse / carrier, and delay-reason mix — where are delivery SLAs breaking? |
+| **Returns** | Measured from the outbound order book: overall return rate, reason Pareto, category split (sized vs one-size), most-returned products with measured rates, disposition mix, and the ops→CX linkage (late deliveries ↔ cancellations) |
+| **Size Availability Risk** | Per-product size-level stock-out detection: a size is flagged when its stock share falls below its demand share or its cover drops under recent offtake — "XL is approaching stock-out", with revenue at risk |
 | **Suppliers** | Transparent weighted scoring (delivery 30 / quality 25 / cost 25 / reliability 20) with per-component breakdown, trend charts, auto-generated summary |
 | **Insights & Actions** | The decision center: recommendations grouped Critical / Warning / Opportunity, priority score + confidence per recommendation, supplier review flags, one-click "Create Purchase Order" |
 | **Scenario Lab** | What-if sliders (demand ±, lead time, safety stock, inventory) driving live backend recalculation; save and compare scenarios side by side |
@@ -109,11 +110,22 @@ inventory(id, product_id→products, date, opening_stock, received_quantity,
           sold_quantity, closing_stock)
 purchase_orders(id, po_number, product_id→products, supplier_id→suppliers,
                 quantity, unit_cost, order_date, expected_date, actual_date, status)
+warehouses(id, code, name, region, city)              -- outbound fulfillment nodes
+variant_inventory(id, product_id→products, warehouse_id→warehouses, size, color,
+                  units)                               -- Black/M/Delhi = 12
+outbound_orders(id, product_id→products, warehouse_id→warehouses, region, size,
+                quantity, unit_price, revenue, order_date, promised_date,
+                pick/pack/dispatch_hours, carrier, status, delay_reason,
+                delivered_date)                        -- 90d customer order book
+return_lines(id, order_id→outbound_orders, product_id→products, reason,
+             disposition, return_date)
 users(id, name, email, role)
 settings(key, value, kind, label)   -- runtime business assumptions
 ```
 
 Seed data is a **fashion-first assortment**: 8 categories, 15 apparel/footwear/beauty suppliers, 96 SKUs, one year of daily demand with weekend and festive-season uplift, and a signature hero SKU — *Festive Kurta Set* — whose deterministic path produces the marquee demo: a +30% festive demand spike that stocks the item out in 8 days against a 10-day lead time → CRITICAL → ORDER NOW, with a pre-selected supplier and EOQ-sized quantity. All classifications are still computed at runtime by the analytics layer; nothing downstream knows the seed pinned anything.
+
+The **outbound layer** makes the INVENTORY → FULFILLMENT → DELIVERY → RETURNS story real: 4 regional DCs (North/South/East/West), ~1,100 size × color × warehouse variant rows with a *designed* imbalance (the South DC is deliberately under-stocked), 90 days of customer orders (~15k) with pick/pack/dispatch timings, carrier mix, cancellations, and delay reasons — including distant-DC routing that demonstrably produces higher late rates — plus a returns ledger with reason codes and dispositions. The causal chain in the data is genuine: thin South-DC stock → distant routing → longer dispatch → SLA breach, and the root-cause card can only show the chain when the window's numbers actually support it.
 
 Seed data is internally consistent: `opening_stock + received_quantity − sold_quantity = closing_stock` holds for every inventory row, and stock never goes negative.
 
@@ -205,8 +217,8 @@ _Add screenshots here: Command Center KPIs, inventory health donut, forecast cha
 
 ## 12. Roadmap (later phases)
 
-- **Returns ledger** (phase 2): a `returns` table (RMA, reason code, disposition, resale state) powering measured return rates, reason Pareto, and return-aware reorder math — the current Returns page is the honest placeholder that will be replaced.
-- **Outbound delivery tracking**: courier/3PL integration feed for customer-side delivery promises.
+- **3PL integration feed**: push courier/webhook delivery events into `outbound_orders` to replace the seeded delay-reason mix.
+- Returns dispositions workflow (refund/replace/exchange state machine) on top of the shipped returns ledger
 - Seasonality-aware forecasting (SARIMA / Prophet) with holiday regressors
 - Interactive data explorer + natural-language question panel backed by a controlled query grammar
 - Real JWT + role-based access control
@@ -248,6 +260,14 @@ GET /api/intelligence/scenarios/{product_id}/cost-curve
 GET /api/intelligence/abc-xyz  GET  /api/intelligence/inventory-aging
 GET /api/intelligence/velocity-matrix  GET  /api/intelligence/slow-movers
 GET /api/intelligence/procurement-intelligence
+GET  /api/outbound/summary
+GET  /api/outbound/size-availability?category=&limit=12
+GET  /api/outbound/fulfillment-bottleneck?days=30
+GET  /api/outbound/delivery-sla?days=30
+GET  /api/outbound/root-cause?days=30
+GET  /api/outbound/customer-impact?days=30
+GET  /api/outbound/actions?days=30
+GET  /api/outbound/returns?days=90
 GET  /api/analytics
 GET  /api/settings              PUT  /api/settings
 POST /api/settings/reset-demo   (admin)
@@ -258,6 +278,5 @@ All mutating endpoints validate via Pydantic; errors return `{"message": ...}` w
 
 ## Limitations (honest scope)
 
-- **Returns are not measured.** The demo data model has no returns ledger; the Returns page states this explicitly and shows exposure bands derived from published category benchmarks, not fabricated records.
-- **Delivery is inbound.** Without a courier/3PL feed, "Delivery" means supplier delivery performance against purchase orders — the tractable, data-backed half of the delivery story.
+- **Outbound data is simulated, but causal.** The customer-order book and returns ledger are seeded (no live 3PL/courier feed), yet every number shown is *computed* from those rows and the designed causal structure (stock imbalance → distant routing → SLA breach) is verifiable in the data itself. The root-cause card displays the chain only when the window's evidence supports it.
 - Authentication is a signed demo token (no real JWT provider or RBAC); SQLite fallback unless Docker Postgres is started.

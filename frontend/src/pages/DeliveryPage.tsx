@@ -5,13 +5,38 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { BadgeCheck, Clock, PackageCheck, Timer, TriangleAlert, Truck } from "lucide-react";
-import { fulfillmentApi } from "../api/endpoints";
+import { fulfillmentApi, outboundApi } from "../api/endpoints";
 import { Badge, Card, CardBody, CardHeader, ErrorState, Skeleton, Table, TD, TH, THead, TR } from "../components/ui";
 import { PageHeader } from "../components/shared";
 import { KpiCard } from "../components/shared";
+import { RootCauseChainCard } from "../components/shared/RootCauseChainCard";
 import { Stagger, StaggerItem } from "../components/motion";
 import { formatINR, formatNumber, formatPct } from "../utils/format";
-import type { FulfillmentData } from "../types";
+import type { FulfillmentData, SlaBucket } from "../types";
+
+function SlaCard({ title, rows, unit }: { title: string; rows: SlaBucket[]; unit: string }) {
+  return (
+    <Card>
+      <CardHeader title={title} subtitle={`Late-delivery share per ${unit} (last 30 days).`} />
+      <CardBody className="space-y-2">
+        {rows.length === 0 && <p className="text-xs text-ink/40">No deliveries in this window.</p>}
+        {rows.map((r) => (
+          <div key={r.key} className="rounded-2xl border border-ink/10 bg-ink/[0.02] px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-ink">{r.key}</span>
+              <Badge tone={r.late_rate_pct > 20 ? "red" : r.late_rate_pct > 8 ? "yellow" : "green"} dot>
+                {r.late_rate_pct}% late
+              </Badge>
+            </div>
+            <p className="mt-0.5 text-[11px] text-ink/50">
+              {r.late} of {r.delivered} deliveries · avg +{r.avg_late_days}d when late
+            </p>
+          </div>
+        ))}
+      </CardBody>
+    </Card>
+  );
+}
 
 function MonthlyBars({ monthly }: { monthly: FulfillmentData["monthly"] }) {
   if (monthly.length === 0) return <p className="py-8 text-center text-sm text-ink/40">No purchase orders in this window.</p>;
@@ -40,7 +65,9 @@ function MonthlyBars({ monthly }: { monthly: FulfillmentData["monthly"] }) {
 
 export default function DeliveryPage() {
   const q = useQuery({ queryKey: ["delivery"], queryFn: () => fulfillmentApi.summary(90) });
+  const outbound = useQuery({ queryKey: ["outbound-sla"], queryFn: () => outboundApi.deliverySla(30) });
   const d = q.data;
+  const sla = outbound.data;
 
   return (
     <div className="space-y-6">
@@ -56,6 +83,55 @@ export default function DeliveryPage() {
           </div>
         )}
       />
+
+      {/* Outbound customer-delivery intelligence (last 30 days) */}
+      {sla && (
+        <Stagger className="space-y-5">
+          <StaggerItem>
+            <RootCauseChainCard days={30} />
+          </StaggerItem>
+
+          <StaggerItem>
+            <div className="grid gap-5 lg:grid-cols-3">
+              <SlaCard title="Which regions are breaking SLA?" rows={sla.by_region} unit="region" />
+              <SlaCard title="Which warehouses ship late?" rows={sla.by_warehouse} unit="DC" />
+              <SlaCard title="Which carriers underperform?" rows={sla.by_carrier} unit="carrier" />
+            </div>
+          </StaggerItem>
+
+          <StaggerItem>
+            <Card>
+              <CardHeader
+                icon={<TriangleAlert size={15} aria-hidden />}
+                title="Why do delays happen?"
+                subtitle={`${sla.late} late deliveries in the last ${sla.window_days} days, by recorded reason.`}
+              />
+              <CardBody>
+                <div className="space-y-2.5">
+                  {sla.delay_reasons.map((r) => {
+                    const max = sla.delay_reasons[0]?.count || 1;
+                    return (
+                      <div key={r.reason}>
+                        <div className="mb-1 flex items-baseline justify-between text-xs">
+                          <span className="text-ink/70">{r.reason}</span>
+                          <span className="font-medium text-ink">{formatNumber(r.count)} <span className="text-ink/40">({Math.round(r.count / sla.late * 100)}%)</span></span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-ink/10">
+                          <div className="h-full rounded-full bg-red-400/80" style={{ width: `${(r.count / max) * 100}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardBody>
+            </Card>
+          </StaggerItem>
+        </Stagger>
+      )}
+
+      <h2 className="border-t border-ink/10 pt-6 font-display text-sm font-semibold uppercase tracking-widest text-ink/70">
+        Inbound · supplier delivery
+      </h2>
 
       {q.isError && (
         <Card><ErrorState message={(q.error as Error)?.message || "Failed to load delivery performance"} onRetry={() => q.refetch()} /></Card>
@@ -91,7 +167,7 @@ export default function DeliveryPage() {
           </Stagger>
 
           <Card>
-            <CardHeader icon={<Timer size={15} aria-hidden />} title="Where are delivery SLAs breaking?" subtitle="Order volume and lateness by month — red months need a supplier conversation." />
+            <CardHeader icon={<Timer size={15} aria-hidden />} title="Is inbound delivery performance stable?" subtitle="Order volume and lateness by month — red months need a supplier conversation." />
             <CardBody><MonthlyBars monthly={d.monthly} /></CardBody>
           </Card>
 

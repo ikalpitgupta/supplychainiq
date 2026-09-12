@@ -237,6 +237,12 @@ def product_detail(db: Session, product_id: int, horizon_days: int = 30) -> dict
 
     cat = db.get(Category, p.category_id)
     sup = db.get(Supplier, p.supplier_id) if p.supplier_id else None
+
+    # Outbound view: variant × warehouse stock, size risk, fulfillment and
+    # return performance for THIS product (the complete product-health view).
+    from app.services.outbound_service import outbound_product_view
+    outbound = outbound_product_view(db, product_id)
+
     return {
         "id": p.id, "sku": p.sku, "name": p.name,
         "category": cat.name if cat else "?",
@@ -253,6 +259,7 @@ def product_detail(db: Session, product_id: int, horizon_days: int = 30) -> dict
         "risk_tier": decision["risk_tier"],
         "decision": decision,
         "timeline": timeline,
+        "outbound": outbound,
         "purchase_orders": po_list,
         "formulas": {
             "safety_stock": "Z × σ(demand) × √(lead time)",

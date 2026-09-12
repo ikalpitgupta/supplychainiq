@@ -2,6 +2,7 @@ from app.database.session import Base
 from app.models.category import Category
 from app.models.import_log import ImportLog
 from app.models.inventory import InventoryDaily
+from app.models.outbound import OutboundOrder, ReturnLine, VariantInventory, Warehouse
 from app.models.product import Product
 from app.models.purchase_order import PurchaseOrder
 from app.models.sale import Sale
@@ -14,10 +15,14 @@ __all__ = [
     "Category",
     "ImportLog",
     "InventoryDaily",
+    "OutboundOrder",
     "Product",
     "PurchaseOrder",
+    "ReturnLine",
     "Sale",
     "Setting",
     "Supplier",
     "User",
+    "VariantInventory",
+    "Warehouse",
 ]

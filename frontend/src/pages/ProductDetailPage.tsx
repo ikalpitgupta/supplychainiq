@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, ClipboardList } from "lucide-react";
+import { ArrowLeft, ClipboardList, Shirt } from "lucide-react";
 import { productsApi } from "../api/endpoints";
 import { Badge, Button, Card, CardBody, CardHeader, EmptyState, ErrorState, Skeleton, SkeletonCard, Table, TD, TH, THead, TR } from "../components/ui";
 import { CHART_COLORS, KpiCard, PageHeader, StatusBadge } from "../components/shared";
@@ -93,6 +93,77 @@ export default function ProductDetailPage() {
       <div className="mt-4">
         <DecisionFlowCard d={d} onCreatePo={() => setPoOpen(true)} />
       </div>
+
+      {/* Outbound health: variant × warehouse matrix, size risk, fulfillment, returns */}
+      {d.outbound && d.outbound.total_units > 0 && (
+        <Card className="mt-4">
+          <CardHeader
+            icon={<Shirt className="h-4 w-4" />}
+            title="How healthy is this product across sizes and warehouses?"
+            subtitle={`${formatNumber(d.outbound.total_units)} units across ${d.outbound.warehouses.length} DCs${d.outbound.sized ? " · sized product" : " · one-size product"}.`}
+          />
+          <CardBody className="overflow-x-auto">
+            {d.outbound.size_risk && (
+              <div className="mb-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5 text-xs leading-relaxed text-red-700 dark:text-red-400">
+                <strong>Size availability risk:</strong>{" "}
+                {d.outbound.size_risk.at_risk.map((r) => `size ${r.size} (${r.units} units on hand, ${r.d30_demand} sold in 30d)`).join("; ")}.
+                Estimated demand at risk over two weeks: ~₹{formatNumber(Math.round(d.outbound.size_risk.revenue_at_risk))}.
+              </div>
+            )}
+            {d.outbound.sized ? (
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>Size</TH>
+                    {d.outbound.warehouses.map((w) => <TH key={w} className="text-right">{w}</TH>)}
+                    <TH className="text-right">Total</TH>
+                  </TR>
+                </THead>
+                <tbody>
+                  {Object.entries(d.outbound.variants).map(([size, v]) => (
+                    <TR key={size}>
+                      <TD className="font-medium text-ink">{size}</TD>
+                      {d.outbound!.warehouses.map((w) => {
+                        const units = v.by_warehouse[w] ?? 0;
+                        return (
+                          <TD key={w} className="text-right">
+                            <span className={`inline-block min-w-8 rounded-md px-1.5 py-0.5 text-xs font-medium ${
+                              units === 0 ? "bg-red-500/10 text-red-600" : units < 10 ? "bg-amber-500/10 text-amber-700" : "text-ink/70"}`}>{units}</span>
+                          </TD>
+                        );
+                      })}
+                      <TD className="text-right font-semibold text-ink">{v.total}</TD>
+                    </TR>
+                  ))}
+                </tbody>
+              </Table>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {d.outbound.warehouses.map((w) => {
+                  const units = Object.values(d.outbound!.variants).reduce((a, v) => a + (v.by_warehouse[w] ?? 0), 0);
+                  return (
+                    <span key={w} className="rounded-full border border-ink/10 bg-panel/70 px-3 py-1 text-xs text-ink/70">
+                      {w}: <strong className="text-ink">{units}</strong> units
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            {d.outbound.fulfillment.orders_90d > 0 && (
+              <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 rounded-xl bg-panel/70 px-4 py-3 text-xs sm:grid-cols-3 lg:grid-cols-5">
+                <span className="text-ink/50">Orders (90d): <strong className="text-ink">{formatNumber(d.outbound.fulfillment.orders_90d)}</strong></span>
+                <span className="text-ink/50">Late: <strong className={d.outbound.fulfillment.late_rate_pct != null && d.outbound.fulfillment.late_rate_pct > 15 ? "text-red-600" : "text-ink"}>{d.outbound.fulfillment.late_rate_pct != null ? `${d.outbound.fulfillment.late_rate_pct}%` : "—"}</strong></span>
+                <span className="text-ink/50">Cancelled: <strong className="text-ink">{d.outbound.fulfillment.cancel_rate_pct != null ? `${d.outbound.fulfillment.cancel_rate_pct}%` : "—"}</strong></span>
+                <span className="text-ink/50">Returns (90d): <strong className={d.outbound.returns.return_rate_pct != null && d.outbound.returns.return_rate_pct > 25 ? "text-red-600" : "text-ink"}>{d.outbound.returns.returns_90d} ({d.outbound.returns.return_rate_pct != null ? `${d.outbound.returns.return_rate_pct}%` : "—"})</strong></span>
+                <span className="text-ink/50">Top return reason: <strong className="text-ink">{d.outbound.returns.top_reasons[0]?.[0] ?? "—"}</strong></span>
+                <span className="text-ink/50">Avg pick: <strong className="text-ink">{d.outbound.fulfillment.avg_pick_hours != null ? `${d.outbound.fulfillment.avg_pick_hours}h` : "—"}</strong></span>
+                <span className="text-ink/50">Avg pack: <strong className="text-ink">{d.outbound.fulfillment.avg_pack_hours != null ? `${d.outbound.fulfillment.avg_pack_hours}h` : "—"}</strong></span>
+                <span className="text-ink/50">Avg dispatch: <strong className="text-ink">{d.outbound.fulfillment.avg_dispatch_hours != null ? `${d.outbound.fulfillment.avg_dispatch_hours}h` : "—"}</strong></span>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      )}
 
       {/* Stock-out timeline markers */}
       {d.timeline && m.avg_daily_demand > 0 && (

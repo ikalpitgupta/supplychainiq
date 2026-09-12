@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (analytics, auth, dashboard, data_quality, fulfillment, import_export,
-                            intelligence, products, purchase_orders, recommendations,
+                            intelligence, outbound, products, purchase_orders, recommendations,
                             settings, suppliers)
 
 api_router = APIRouter(prefix="/api")
@@ -12,6 +12,7 @@ api_router.include_router(products.router)
 api_router.include_router(suppliers.router)
 api_router.include_router(purchase_orders.router)
 api_router.include_router(fulfillment.router)
+api_router.include_router(outbound.router)
 api_router.include_router(recommendations.router)
 api_router.include_router(analytics.router)
 api_router.include_router(data_quality.router)
