@@ -1038,3 +1038,64 @@ export interface PmDecisionLayer {
   quadrants: { quick_wins: string[]; big_bets: string[]; fill_ins: string[]; reconsider: string[] };
   method_note: string;
 }
+
+// ── Network Scenario Lab (business-level what-if) ────────────────────
+export interface NetworkScenarioInputs {
+  demand_pct: number;
+  lead_delta_days: number;
+  home_allocation: number;
+  service_level: number;
+  promo_uplift_pct: number;
+  promo_discount: number;
+  capacity_factor: number;
+}
+export interface ScenarioStage {
+  key: string;
+  label: string;
+  detail: string;
+  from: number | null;
+  to: number;
+  unit: string;
+  severity: "good" | "warn" | "bad" | "neutral";
+}
+export interface NetworkScenarioOutputs {
+  demand_units_day: number;
+  safety_stock_units: number;
+  required_inventory_units: number;
+  required_capital: number;
+  stockout_products: number;
+  shortfall_units: number;
+  revenue_at_risk: number;
+  fulfillment_risk_pct: number;
+  overflow_share_pct: number;
+  projected_late_rate: number;
+  current_late_rate: number;
+  promo_discount_cost: number;
+  overstock_capital: number;
+  holding_cost_4w: number;
+  avg_lead_days: number;
+  recommended_action: string;
+  critical_products: { product_id: number; name: string | null; days_to_zero: number }[];
+}
+export interface NetworkScenarioRun {
+  label: string;
+  inputs: NetworkScenarioInputs;
+  stages: ScenarioStage[];
+  outputs: NetworkScenarioOutputs;
+  basis: {
+    window_days: number;
+    products: number;
+    measured_routing: Record<string, number>;
+    service_level_z: number;
+    notes: string[];
+  };
+}
+export interface NetworkCompareRow {
+  metric: string;
+  values: { label: string; display: string; raw: number }[];
+}
+export interface NetworkCompareResponse {
+  current: NetworkScenarioRun;
+  scenarios: NetworkScenarioRun[];
+  rows: NetworkCompareRow[];
+}

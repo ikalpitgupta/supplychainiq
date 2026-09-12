@@ -2,15 +2,19 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight, FlaskConical, GitCompareArrows, Plus, RotateCcw, Save, Trash2, TrendingDown, TrendingUp,
-} from "lucide-react";import { intelligenceApi, productsApi } from "../api/endpoints";
+  ArrowRight, Boxes, FlaskConical, GitCompareArrows, Plus, RotateCcw, Save, Trash2, TrendingDown, TrendingUp,
+} from "lucide-react";
+import { intelligenceApi, productsApi } from "../api/endpoints";
 import {
   Button, Card, CardBody, CardHeader, ErrorState, Select, Skeleton, Table, TD, TH, THead, TR,
 } from "../components/ui";
 import { PageHeader } from "../components/shared";
 import { Stagger, StaggerItem } from "../components/motion";
+import NetworkScenarioLab from "../components/shared/NetworkScenarioLab";
 import { formatINR, formatNumber } from "../utils/format";
 import type { ScenarioBranch, ScenarioResponse } from "../types";
+
+type LabTab = "network" | "product";
 
 /** Slider with a centered readout; a plain range input styled by the app CSS. */
 function Slider({ label, value, min, max, step, onChange, format, hint }: {
@@ -68,6 +72,39 @@ function BranchStats({ branch, title, tone }: { branch: ScenarioBranch; title: s
 interface SavedScenario { name: string; demandPct: number; leadDelta: number; safetyStock: number | null; stock: number | null; result: ScenarioResponse }
 
 export default function ScenarioSimulatorPage() {
+  const [tab, setTab] = useState<LabTab>("network");
+
+  return (
+    <div>
+      <PageHeader
+        title="Scenario Lab"
+        subtitle="Ask “what happens if the business situation changes?” — real recalculation, no simulated delays."
+      />
+      <div className="mb-5 flex gap-1 rounded-full border border-ink/10 bg-surface p-1 w-fit" role="tablist" aria-label="Scenario mode">
+        {([
+          ["network", "Business scenarios", <Boxes key="n" size={14} aria-hidden />],
+          ["product", "Single product", <FlaskConical key="p" size={14} aria-hidden />],
+        ] as const).map(([key, label, icon]) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              tab === key ? "bg-chrome text-white" : "text-ink/60 hover:text-ink"
+            }`}
+          >
+            {icon}
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "network" ? <NetworkScenarioLab /> : <ProductScenarioLab />}
+    </div>
+  );
+}
+
+function ProductScenarioLab() {
   const options = useQuery({ queryKey: ["product-options"], queryFn: productsApi.options });
   const [productId, setProductId] = useState<number | undefined>();
   const effectiveId = productId ?? options.data?.items?.[0]?.id;

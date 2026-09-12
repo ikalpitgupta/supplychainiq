@@ -2,7 +2,9 @@ import { api, apiUpload } from "../client";
 import type {
   AbcXyzResponse, AnalyticsData, AnomaliesResponse, CatalogQuality, ControlTowerResponse,
   CostCurveResponse, CustomerImpact, DashboardData, DeliverySlaIntel, ForecastResponse, FulfillmentBottleneck,
-  FulfillmentData, ImportReport, InboundSummary, InventoryAgingResponse, OutboundActionsResponse, ProcurementLinkage,
+  FulfillmentData, ImportReport, InboundSummary, InventoryAgingResponse,
+  NetworkCompareResponse, NetworkScenarioInputs, NetworkScenarioRun,
+  OutboundActionsResponse, ProcurementLinkage,
   PmDecisionLayer, PricingIntel, PromotionsIntel, RcaAnalysis, ReturnsIntel,
   POFormContext, POListResponse, ProductDetail,
   ProductListResponse, ProcurementIntelligenceResponse, RecommendationsResponse,
@@ -100,9 +102,9 @@ export const outboundApi = {
 };
 
 export const intelligenceApi = {
-  controlTower: () => api<ControlTowerResponse>("/intelligence/control-tower"),
+  controlTower: () => api<ControlTowerResponse>("/control-tower"),
   anomalies: (threshold = 2.5) =>
-    api<AnomaliesResponse>(`/intelligence/anomalies?threshold=${threshold}`),
+    api<AnomaliesResponse>(`/anomalies?threshold=${threshold}`),
   scenario: (
     productId: number,
     opts: { demandChangePct?: number; leadTimeDeltaDays?: number; safetyStock?: number | null; stock?: number | null; serviceLevel?: number | null } = {},
@@ -113,15 +115,28 @@ export const intelligenceApi = {
     if (opts.safetyStock != null) qs.set("safety_stock", String(opts.safetyStock));
     if (opts.stock != null) qs.set("stock", String(opts.stock));
     if (opts.serviceLevel != null) qs.set("service_level", String(opts.serviceLevel));
-    return api<ScenarioResponse>(`/intelligence/scenarios/${productId}?${qs.toString()}`);
+    return api<ScenarioResponse>(`/scenarios/${productId}?${qs.toString()}`);
   },
   costCurve: (productId: number) =>
-    api<CostCurveResponse>(`/intelligence/scenarios/${productId}/cost-curve`),
-  abcXyz: () => api<AbcXyzResponse>("/intelligence/abc-xyz"),
-  aging: () => api<InventoryAgingResponse>("/intelligence/inventory-aging"),
-  velocityMatrix: () => api<VelocityMatrixResponse>("/intelligence/velocity-matrix"),
-  slowMovers: () => api<SlowMoversResponse>("/intelligence/slow-movers"),
-  procurement: () => api<ProcurementIntelligenceResponse>("/intelligence/procurement-intelligence"),
+    api<CostCurveResponse>(`/scenarios/${productId}/cost-curve`),
+  networkScenario: (opts: Partial<NetworkScenarioInputs> & { label?: string } = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(opts).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) qs.set(k, String(v));
+    });
+    return api<NetworkScenarioRun>(`/scenarios/network?${qs.toString()}`);
+  },
+  networkCompare: (a: Partial<NetworkScenarioInputs>, b: Partial<NetworkScenarioInputs>) => {
+    const qs = new URLSearchParams();
+    Object.entries(a).forEach(([k, v]) => { if (v != null) qs.set(`a_${k}`, String(v)); });
+    Object.entries(b).forEach(([k, v]) => { if (v != null) qs.set(`b_${k}`, String(v)); });
+    return api<NetworkCompareResponse>(`/scenarios/network/compare?${qs.toString()}`);
+  },
+  abcXyz: () => api<AbcXyzResponse>("/abc-xyz"),
+  aging: () => api<InventoryAgingResponse>("/inventory-aging"),
+  velocityMatrix: () => api<VelocityMatrixResponse>("/velocity-matrix"),
+  slowMovers: () => api<SlowMoversResponse>("/slow-movers"),
+  procurement: () => api<ProcurementIntelligenceResponse>("/procurement-intelligence"),
 };
 
 export const settingsApi = {
