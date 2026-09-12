@@ -1,8 +1,9 @@
 import { api, apiUpload } from "../client";
 import type {
-  AbcXyzResponse, AnalyticsData, AnomaliesResponse, ControlTowerResponse,
+  AbcXyzResponse, AnalyticsData, AnomaliesResponse, CatalogQuality, ControlTowerResponse,
   CostCurveResponse, CustomerImpact, DashboardData, DeliverySlaIntel, ForecastResponse, FulfillmentBottleneck,
-  FulfillmentData, ImportReport, InventoryAgingResponse, OutboundActionsResponse, ReturnsIntel,
+  FulfillmentData, ImportReport, InboundSummary, InventoryAgingResponse, OutboundActionsResponse, ProcurementLinkage,
+  PricingIntel, PromotionsIntel, ReturnsIntel,
   POFormContext, POListResponse, ProductDetail,
   ProductListResponse, ProcurementIntelligenceResponse, RecommendationsResponse,
   ReturnsSummary, RootCauseChain, ScenarioResponse, SettingsResponse, SizeAvailabilityResponse,
@@ -163,3 +164,11 @@ export interface ImportHistoryItem {
   ran_at: string | null;
   first_errors: { row: number; error: string }[];
 }
+
+export const inboundApi = {
+  summary: () => api<InboundSummary>("/inbound/summary"),
+  procurement: (days = 120) => api<ProcurementLinkage>(`/inbound/procurement?days=${days}`),
+  catalogQuality: () => api<CatalogQuality>("/inbound/catalog-quality"),
+  pricing: (days = 90) => api<PricingIntel>(`/inbound/pricing?days=${days}`),
+  promotions: (days = 90) => api<PromotionsIntel>(`/inbound/promotions?days=${days}`),
+};

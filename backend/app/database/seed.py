@@ -15,12 +15,16 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.database.session import Base, db_manager
-from app.models import (Category, InventoryDaily, OutboundOrder, Product, PurchaseOrder,
+from app.models import (Category, InventoryDaily, OutboundOrder, Product, Promotion, PurchaseOrder,
                         ReturnLine, Sale, Setting, Supplier, User, VariantInventory, Warehouse)
 
 RNG_SEED = 42
 DAYS = 365
 END_DATE = date.today() - timedelta(days=1)  # seed ends yesterday; "today" has no partial data
+
+# Catalog attribute pools (Inbound Intelligence · Catalog Quality).
+COLORS = ["Black", "White", "Navy", "Olive", "Ivory", "Maroon", "Mustard", "Teal", "Blush", "Charcoal"]
+MATERIALS = ["Cotton", "Rayon", "Denim", "Viscose", "Linen Blend", "Silk Blend", "Genuine Leather", "PU", "Georgette"]
 
 CATEGORY_SPECS: list[dict] = [
     # Fashion e-commerce assortment (Myntra-style marketplace), ordered by
@@ -299,11 +303,13 @@ def seed_demo_data() -> dict:
     """Reset and reseed the entire database. Returns summary counts."""
     engine = db_manager.engine()
     Base.metadata.create_all(engine)
+    from app.database.migrations import run_light_migrations
+    run_light_migrations(engine)
     db = db_manager.sessionmaker()()
 
     # Wipe (order matters for FKs; SQLite has FKs off by default, Postgres enforced).
     for model in (ReturnLine, OutboundOrder, VariantInventory, Warehouse,
-                  Sale, InventoryDaily, PurchaseOrder, Product, Supplier, Category, User, Setting):
+                  Promotion, Sale, InventoryDaily, PurchaseOrder, Product, Supplier, Category, User, Setting):
         db.execute(delete(model))
     db.commit()
 
@@ -363,6 +369,20 @@ def seed_demo_data() -> dict:
                 supplier.lead_time_days = target_lead
             sim = _simulate_product(pname, spec, supplier, rng, fixed=fixed)
             lead = supplier.lead_time_days
+            # Catalog attributes (Inbound Intelligence · Catalog Quality): most
+            # products ship complete, a deterministic slice carries gaps for the
+            # quality scan. Signature products are always complete so the hero
+            # demo looks its best. MRP/discount bands and a slice of recent price
+            # changes feed the Pricing section.
+            is_sig = fixed is not None
+            sized_cat = spec["name"] in SIZED_CATEGORIES
+            r_color, r_mat, r_desc, r_img = (float(rng.random()) for _ in range(4))
+            r_sizechart = float(rng.random())
+            color = str(rng.choice(COLORS))
+            material = str(rng.choice(MATERIALS))
+            mrp_mult = float(rng.choice([1.0, 1.15, 1.2, 1.35, 1.5], p=[0.35, 0.25, 0.15, 0.15, 0.1]))
+            price_up = (not is_sig) and float(rng.random()) < 0.10
+            price_down = (not is_sig) and (not price_up) and float(rng.random()) < 0.08
             p = Product(
                 sku=f"{cat.name[:3].upper()}-{sku_n:03d}",
                 name=pname,
@@ -373,6 +393,20 @@ def seed_demo_data() -> dict:
                 lead_time_days=lead,
                 active=bool(rng.random() > 0.02),
                 created_at=now,
+                color=None if (not is_sig and r_color < 0.08) else color,
+                material=None if (not is_sig and r_mat < 0.16) else material,
+                description=(None if (not is_sig and r_desc < 0.24) else
+                             f"{pname} — {material.lower()} {spec['name'].lower()} essential in {color.lower()}; "
+                             "everyday wearability with easy care."),
+                images_json=(None if (not is_sig and r_img < 0.12) else
+                             f'"[/img/{sku_n:03d}.jpg","/img/{sku_n:03d}-2.jpg"]'),
+                size_chart_json=(None if (not is_sig and sized_cat and r_sizechart < 0.22) else
+                                 '{"S":"38","M":"40","L":"42","XL":"44"}'),
+                mrp=round(sim["selling_price"] * mrp_mult, 2),
+                price_prev=(round(sim["selling_price"] / 1.12, 2) if price_up else
+                            round(sim["selling_price"] * 0.90, 2) if price_down else None),
+                price_changed_at=((now - timedelta(days=int(rng.integers(10, 55))))
+                                  if (price_up or price_down) else None),
             )
             products.append(p)
             sim_results.append(sim)
@@ -535,6 +569,24 @@ def seed_demo_data() -> dict:
                     stock_split.setdefault(p.id, {}).setdefault(size, {})[whs[wid].id] = units
     db.add_all(variant_objs)
 
+    # Promotion campaigns: three windows inside the outbound period. Orders
+    # placed inside a window are attributed to the campaign with the discounted
+    # paid price — the Promotions analysis derives conversion and margin
+    # impact from these rows, nothing is asserted.
+    campaign_objs = [
+        Promotion(name="End of Season Sale", kind="End of Season", discount_pct=0.30,
+                  start_date=(END_DATE - timedelta(days=75)).isoformat(),
+                  end_date=(END_DATE - timedelta(days=61)).isoformat()),
+        Promotion(name="Independence Day Flash", kind="Flash", discount_pct=0.20,
+                  start_date=(END_DATE - timedelta(days=45)).isoformat(),
+                  end_date=(END_DATE - timedelta(days=39)).isoformat()),
+        Promotion(name="Festive Dhamaka", kind="Festive", discount_pct=0.40,
+                  start_date=(END_DATE - timedelta(days=21)).isoformat(),
+                  end_date=(END_DATE - timedelta(days=8)).isoformat()),
+    ]
+    db.add_all(campaign_objs)
+    db.flush()
+
     # Outbound orders: last 90 days. Each order ships from the customer's home
     # DC when that DC is reasonably stocked for the size; otherwise it is
     # distant-routed (longer dispatch + more lateness) — the designed causal
@@ -567,6 +619,19 @@ def seed_demo_data() -> dict:
                 local = local_share >= 0.25          # home DC reasonably stocked?
                 order_day = date.fromisoformat(r["date"])
                 promised = order_day + timedelta(days=3)
+
+                # Campaign attribution: orders inside a campaign window have a
+                # 55% likelihood of carrying the campaign tag with the discounted
+                # paid price (the rest are organic traffic that overlaps the sale).
+                promo = next((c for c in campaign_objs
+                              if date.fromisoformat(c.start_date) <= order_day
+                              <= date.fromisoformat(c.end_date)), None)
+                if promo is not None and float(rng.random()) < 0.55:
+                    order_campaign = promo.id
+                    paid_price = round(p.selling_price * (1 - promo.discount_pct), 2)
+                else:
+                    order_campaign = None
+                    paid_price = None
 
                 pick_h = round(float(rng.uniform(1.4, 3.0)), 1)
                 pack_h = round(float(rng.uniform(0.5, 1.5)), 1)
@@ -606,6 +671,7 @@ def seed_demo_data() -> dict:
                     pack_hours=pack_h if not cancelled else None,
                     dispatch_hours=disp_h if status in ("Delivered", "Dispatched") and not cancelled else None,
                     carrier=carrier, delay_reason=reason, status=status,
+                    campaign_id=order_campaign, paid_price=paid_price,
                 )
                 order_objs.append(o)
                 if status == "Delivered" and delivered:

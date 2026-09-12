@@ -27,6 +27,7 @@ const DeliveryPage = lazy(() => import("./pages/DeliveryPage"));
 const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 const ScenarioSimulatorPage = lazy(() => import("./pages/ScenarioSimulatorPage"));
 const IntelligencePage = lazy(() => import("./pages/IntelligencePage"));
+const InboundPage = lazy(() => import("./pages/InboundPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,7 @@ function App() {
                   <Route path="/returns" element={<Suspense fallback={<PageFallback />}><ReturnsPage /></Suspense>} />
                   <Route path="/simulator" element={<Suspense fallback={<PageFallback />}><ScenarioSimulatorPage /></Suspense>} />
                   <Route path="/intelligence" element={<Suspense fallback={<PageFallback />}><IntelligencePage /></Suspense>} />
+                  <Route path="/inbound" element={<Suspense fallback={<PageFallback />}><InboundPage /></Suspense>} />
                   <Route path="/suppliers" element={<SuppliersPage />} />
                   <Route path="/suppliers/:id" element={<SupplierDetailPage />} />
                   <Route path="/insights" element={<InsightsPage />} />

@@ -47,6 +47,7 @@ Both failures come from the same blind spot: the gap between *how long stock las
 | **Returns** | Measured from the outbound order book: overall return rate, reason Pareto, category split (sized vs one-size), most-returned products with measured rates, disposition mix, and the ops→CX linkage (late deliveries ↔ cancellations) |
 | **Size Availability Risk** | Per-product size-level stock-out detection: a size is flagged when its stock share falls below its demand share or its cover drops under recent offtake — "XL is approaching stock-out", with revenue at risk |
 | **Suppliers** | Transparent weighted scoring (delivery 30 / quality 25 / cost 25 / reliability 20) with per-component breakdown, trend charts, auto-generated summary |
+| **Inbound Intelligence** | Four lenses on one page — **Procurement** (supplier risk linkage: measured PO on-time/defect joined to downstream stock-out and overstock exposure, spend concentration HHI), **Catalog Quality** (attribute completeness by category with the size-chart ↔ returns linkage stated only when measured on both sides), **Pricing** (high-discount/low-margin products, observed unit movement after price changes — correlation, never causation), **Promotions** (campaign → orders → revenue → margin with discount cost and an organic baseline; the trade-off is explicit, e.g. a 40% campaign running at an 11% margin rate vs 47% organic) |
 | **Insights & Actions** | The decision center: recommendations grouped Critical / Warning / Opportunity, priority score + confidence per recommendation, supplier review flags, one-click "Create Purchase Order" |
 | **Scenario Lab** | What-if sliders (demand ±, lead time, safety stock, inventory) driving live backend recalculation; save and compare scenarios side by side |
 | **Intelligence** | Inventory efficiency (turnover, DIO, holding cost), fulfillment efficiency, supplier spend concentration (HHI), single-source dependencies, purchase-price variance with annualized impact, inventory aging (0-30/31-60/61-90/90+), velocity matrix, slow movers, ABC×XYZ segmentation with strategy notes, data-generated insights |
@@ -126,6 +127,8 @@ settings(key, value, kind, label)   -- runtime business assumptions
 Seed data is a **fashion-first assortment**: 8 categories, 15 apparel/footwear/beauty suppliers, 96 SKUs, one year of daily demand with weekend and festive-season uplift, and a signature hero SKU — *Festive Kurta Set* — whose deterministic path produces the marquee demo: a +30% festive demand spike that stocks the item out in 8 days against a 10-day lead time → CRITICAL → ORDER NOW, with a pre-selected supplier and EOQ-sized quantity. All classifications are still computed at runtime by the analytics layer; nothing downstream knows the seed pinned anything.
 
 The **outbound layer** makes the INVENTORY → FULFILLMENT → DELIVERY → RETURNS story real: 4 regional DCs (North/South/East/West), ~1,100 size × color × warehouse variant rows with a *designed* imbalance (the South DC is deliberately under-stocked), 90 days of customer orders (~15k) with pick/pack/dispatch timings, carrier mix, cancellations, and delay reasons — including distant-DC routing that demonstrably produces higher late rates — plus a returns ledger with reason codes and dispositions. The causal chain in the data is genuine: thin South-DC stock → distant routing → longer dispatch → SLA breach, and the root-cause card can only show the chain when the window's numbers actually support it.
+
+The **inbound layer** powers Inbound Intelligence: catalog attributes on every product (color, material, description, images, size chart, MRP, price-change history) with a deterministic slice of gaps for the quality scan, and three promotion campaigns inside the outbound window with attributed discounted orders — so conversion, discount cost, and margin impact are all derived from rows, never asserted.
 
 Seed data is internally consistent: `opening_stock + received_quantity − sold_quantity = closing_stock` holds for every inventory row, and stock never goes negative.
 
@@ -268,6 +271,11 @@ GET  /api/outbound/root-cause?days=30
 GET  /api/outbound/customer-impact?days=30
 GET  /api/outbound/actions?days=30
 GET  /api/outbound/returns?days=90
+GET  /api/inbound/summary
+GET  /api/inbound/procurement?days=120
+GET  /api/inbound/catalog-quality
+GET  /api/inbound/pricing?days=90
+GET  /api/inbound/promotions?days=90
 GET  /api/analytics
 GET  /api/settings              PUT  /api/settings
 POST /api/settings/reset-demo   (admin)

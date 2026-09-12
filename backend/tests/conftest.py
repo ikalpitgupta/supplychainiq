@@ -24,6 +24,8 @@ from app.main import app  # noqa: E402
 def client():
     engine = db_manager.engine()
     Base.metadata.create_all(engine)
+    from app.database.migrations import run_light_migrations
+    run_light_migrations(engine)
     _seed_light(db_manager.sessionmaker()())
     with TestClient(app) as c:
         yield c
@@ -33,10 +35,10 @@ def _seed_light(db) -> None:
     """Small deterministic dataset: 2 categories, 2 suppliers, 4 products, 60 days of data."""
     from datetime import date, timedelta
 
-    from app.models import (Category, InventoryDaily, OutboundOrder, Product, PurchaseOrder,
+    from app.models import (Category, InventoryDaily, OutboundOrder, Product, Promotion, PurchaseOrder,
                             ReturnLine, Sale, Setting, Supplier, VariantInventory, Warehouse)
 
-    for model in (ReturnLine, OutboundOrder, VariantInventory, Warehouse,
+    for model in (ReturnLine, OutboundOrder, VariantInventory, Warehouse, Promotion,
                   Sale, InventoryDaily, PurchaseOrder, Product, Supplier, Category, Setting):
         db.query(model).delete()
     db.commit()
@@ -60,9 +62,24 @@ def _seed_light(db) -> None:
         ("GHOST-005", "Ghost Product", c2.id, s1.id, 100.0, 150.0, 0.0),
     ]
     products = []
-    for sku, name, cat, sup, cost, price, daily in specs:
-        products.append(Product(sku=sku, name=name, category_id=cat, supplier_id=sup,
-                                unit_cost=cost, selling_price=price, lead_time_days=10))
+    for idx, (sku, name, cat, sup, cost, price, daily) in enumerate(specs):
+        p = Product(sku=sku, name=name, category_id=cat, supplier_id=sup,
+                    unit_cost=cost, selling_price=price, lead_time_days=10)
+        # Catalog attributes + pricing history (Inbound Intelligence tests).
+        if idx == 0:
+            p.mrp = 180.0                      # 150/180 → ~17% list discount
+            p.price_prev = 140.0               # price went UP since
+            p.price_changed_at = date.today()
+        elif idx == 1:
+            p.color = None                     # catalog gaps
+            p.description = None
+            p.mrp = 100.0                      # 80/100 → 20% list discount
+        elif idx == 2:
+            p.price_prev = 270.0               # price up 300 vs 270
+            p.price_changed_at = date.today()
+        elif idx == 3:
+            p.images_json = None
+        products.append(p)
     db.add_all(products)
     db.commit()
 
@@ -103,6 +120,13 @@ def _seed_light(db) -> None:
     db.add_all(variant_objs)
     db.commit()
 
+    # One promotion with attributed orders so the promotions lens has data.
+    promo = Promotion(name="Test Flash", kind="Flash", discount_pct=0.20,
+                      start_date=(date.today() - timedelta(days=10)).isoformat(),
+                      end_date=(date.today() - timedelta(days=4)).isoformat())
+    db.add(promo)
+    db.commit()
+
     rng = __import__("random").Random(7)
     order_objs = []
     for i in range(40):
@@ -112,6 +136,8 @@ def _seed_light(db) -> None:
         wh = wh_s if region == "South" else wh_n
         order_day = date.today() - timedelta(days=i + 2)
         promised = order_day + timedelta(days=3)
+        in_campaign = (date.today() - timedelta(days=10)) <= order_day <= (date.today() - timedelta(days=4))
+        attributed = in_campaign and i % 2 == 0
         if region == "South":
             disp, on_time, cancelled = 24.0, rng.random() < 0.4, rng.random() < 0.15
         else:
@@ -134,6 +160,8 @@ def _seed_light(db) -> None:
             delay_reason=("Routed from distant DC" if (region == "South" and status == "Delivered" and not on_time)
                           else ("Carrier delay" if (region == "North" and status == "Delivered" and not on_time) else None)),
             status=status,
+            campaign_id=promo.id if attributed else None,
+            paid_price=round(p.selling_price * 0.8, 2) if attributed else None,
         ))
     db.add_all(order_objs)
     db.commit()
@@ -150,7 +178,7 @@ def _seed_light(db) -> None:
         PurchaseOrder(po_number="PO-T-0001", product_id=products[0].id, supplier_id=s1.id,
                       quantity=200, unit_cost=100.0, order_date=(date.today() - timedelta(days=20)).isoformat(),
                       expected_date=(date.today() - timedelta(days=10)).isoformat(),
-                      actual_date=(date.today() - timedelta(days=9)).isoformat(), status="Delivered"),
+                      actual_date=(date.today() - timedelta(days=11)).isoformat(), status="Delivered"),
         PurchaseOrder(po_number="PO-T-0002", product_id=products[1].id, supplier_id=s2.id,
                       quantity=150, unit_cost=50.0, order_date=(date.today() - timedelta(days=15)).isoformat(),
                       expected_date=(date.today() - timedelta(days=2)).isoformat(),

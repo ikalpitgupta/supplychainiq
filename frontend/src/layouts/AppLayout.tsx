@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle, Bell, Boxes, ChevronDown, Database, FileUp, FlaskConical, Handshake, Info,
-  LayoutDashboard, LogOut, Menu, Moon, PackageSearch, PlayCircle, Search, Settings,
+  LayoutDashboard, LogOut, Menu, Moon, PackageOpen, PackageSearch, PlayCircle, Search, Settings,
   Sparkles, Sun, Truck, X,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -23,6 +23,7 @@ const NAV_PRIMARY = [
   { to: "/fulfillment", label: "Fulfillment", icon: PackageSearch },
   { to: "/delivery", label: "Delivery", icon: Truck },
   { to: "/suppliers", label: "Suppliers", icon: Handshake },
+  { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
   { to: "/insights", label: "Insights & Actions", icon: Sparkles, badge: true },
   { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
 ];

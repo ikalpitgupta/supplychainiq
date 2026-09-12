@@ -4,6 +4,7 @@ from app.models.import_log import ImportLog
 from app.models.inventory import InventoryDaily
 from app.models.outbound import OutboundOrder, ReturnLine, VariantInventory, Warehouse
 from app.models.product import Product
+from app.models.promotion import Promotion
 from app.models.purchase_order import PurchaseOrder
 from app.models.sale import Sale
 from app.models.setting import Setting
@@ -17,6 +18,7 @@ __all__ = [
     "InventoryDaily",
     "OutboundOrder",
     "Product",
+    "Promotion",
     "PurchaseOrder",
     "ReturnLine",
     "Sale",

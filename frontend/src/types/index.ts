@@ -799,3 +799,124 @@ export interface ImportReport {
   total: number;
   errors: { row: number; error: string }[];
 }
+
+/* ---------------------- Inbound Intelligence ---------------------------- */
+
+export interface InboundSupplierRisk {
+  supplier_id: number;
+  supplier: string;
+  lead_time_days: number;
+  po_on_time_rate: number | null;
+  avg_days_late: number;
+  pos_window: number;
+  cancelled_share: number | null;
+  defect_rate: number;
+  cost_index: number;
+  stockout_products: number;
+  overstock_products: number;
+}
+
+export interface ProcurementLinkage {
+  window_days: number;
+  suppliers: InboundSupplierRisk[];
+  flagged: string[];
+  concentration: { top: { supplier: string; spend: number; spend_share: number }[]; hhi: number; top3_share: number };
+  stockout_by_supplier: Record<string, number>;
+}
+
+export interface CatalogCategoryQuality {
+  category: string;
+  products: number;
+  complete_pct: number;
+  missing: { color: number; material: number; description: number; image: number };
+  size_chart_missing: number;
+  size_chart_missing_pct: number | null;
+}
+
+export interface CatalogQuality {
+  total_products: number;
+  complete_pct: number;
+  by_category: CatalogCategoryQuality[];
+  size_chart_linkage: string | null;
+  headline: string;
+  affected_products: { sku: string; name: string; category: string; gaps: string[] }[];
+}
+
+export interface PricingRow {
+  product_id: number;
+  sku: string;
+  product: string;
+  category: string;
+  cost: number;
+  price: number;
+  mrp: number;
+  discount_pct: number;
+  margin_pct: number;
+  est_margin_pct: number;
+  units: number;
+  revenue: number;
+  units_change: number | null;
+}
+
+export interface PriceMove {
+  product_id: number;
+  sku: string;
+  product: string;
+  category: string;
+  prev_price: number;
+  new_price: number;
+  change_pct: number;
+  direction: "up" | "down";
+  units_current: number;
+  units_prior: number;
+  units_change_pct: number | null;
+}
+
+export interface PricingIntel {
+  window_days: number;
+  avg_margin_pct: number | null;
+  products: PricingRow[];
+  high_discount_low_margin: PricingRow[];
+  lowest_margin: PricingRow[];
+  price_moves: PriceMove[];
+  declining_after_increase: PriceMove[];
+  improving_after_change: PriceMove[];
+  interpretation_note: string;
+}
+
+export interface CampaignStats {
+  id: number;
+  name: string;
+  kind: string;
+  discount_pct: number;
+  start: string;
+  end: string;
+  orders?: number;
+  units?: number;
+  revenue?: number;
+  delivered?: number;
+  delivered_revenue?: number;
+  margin?: number;
+  cancel_rate?: number | null;
+  avg_order_value?: number | null;
+  organic?: { orders: number; revenue: number; margin: number } | null;
+  organic_aov?: number | null;
+  aov_delta_pct?: number | null;
+  margin_rate?: number | null;
+  organic_margin_rate?: number | null;
+  discount_cost?: number;
+}
+
+export interface PromotionsIntel {
+  window_days: number;
+  campaigns: CampaignStats[];
+  totals: { revenue: number; discount_cost: number; margin: number; orders: number };
+  tradeoff_note: string;
+}
+
+export interface InboundSummary {
+  procurement: { flagged: string[]; hhi: number; top3_share: number };
+  catalog: { complete_pct: number; headline: string };
+  pricing: { avg_margin_pct: number | null; high_discount_count: number };
+  promotions: { revenue: number; discount_cost: number; margin: number; orders: number };
+}

@@ -20,16 +20,8 @@ logger = logging.getLogger("supplychainiq")
 async def lifespan(app: FastAPI):
     engine = db_manager.engine()
     Base.metadata.create_all(engine)
-    # Lightweight migration: add columns introduced after the first release to
-    # tables that already exist (create_all only makes missing tables).
-    from sqlalchemy import inspect, text
-
-    insp = inspect(engine)
-    if "import_logs" in insp.get_table_names():
-        cols = {c["name"] for c in insp.get_columns("import_logs")}
-        with engine.begin() as conn:
-            if "changes_json" not in cols:
-                conn.execute(text("ALTER TABLE import_logs ADD COLUMN changes_json TEXT"))
+    from app.database.migrations import run_light_migrations
+    run_light_migrations(engine)
     status = db_manager.status()
     logger.info("Database active: %s", status["active"])
     yield

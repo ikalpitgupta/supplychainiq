@@ -20,6 +20,17 @@ class Product(Base):
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
+    # Catalog completeness attributes (Inbound Intelligence · Catalog Quality).
+    # NULL/empty means "missing" — the quality scan derives gaps from these.
+    color: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    material: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(600), nullable=True)
+    images_json: Mapped[str | None] = mapped_column(String(400), nullable=True)  # JSON list of URLs; null = no image
+    size_chart_json: Mapped[str | None] = mapped_column(String(200), nullable=True)  # null = no size chart
+    mrp: Mapped[float | None] = mapped_column(Float, nullable=True)                  # list price (strike-through)
+    price_changed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    price_prev: Mapped[float | None] = mapped_column(Float, nullable=True)
+
     category = relationship("Category", lazy="joined")
     supplier = relationship("Supplier", lazy="joined")
     sales = relationship("Sale", back_populates="product", viewonly=True)

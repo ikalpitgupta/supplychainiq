@@ -63,6 +63,10 @@ class OutboundOrder(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="Delivered", index=True)
     # Delivered | In Progress | Dispatched | Cancelled
 
+    # Promotion attribution (Inbound Intelligence · Promotions). NULL = organic.
+    campaign_id: Mapped[int | None] = mapped_column(ForeignKey("promotions.id"), nullable=True, index=True)
+    paid_price: Mapped[float | None] = mapped_column(Float, nullable=True)          # after discount; NULL = full price
+
 
 class ReturnLine(Base):
     """A returned customer order line with reason and disposition."""

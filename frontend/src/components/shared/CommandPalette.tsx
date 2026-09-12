@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeftRight, Boxes, CornerDownLeft, Database, FlaskConical, FileUp,
-  Handshake, LayoutDashboard, Package, PackageSearch, Radar, Search, Settings,
+  Handshake, LayoutDashboard, Package, PackageOpen, PackageSearch, Radar, Search, Settings,
   Sparkles, Truck, TrendingUp, Zap,
 } from "lucide-react";
 import { productsApi, suppliersApi } from "../../api/endpoints";
@@ -34,6 +34,8 @@ const PAGES: Array<{ to: string; label: string; icon: React.ComponentType<{ clas
   { to: "/delivery", label: "Delivery", icon: Truck },
   { to: "/returns", label: "Returns", icon: ArrowLeftRight },
   { to: "/suppliers", label: "Suppliers", icon: Handshake },
+  { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
+  { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
   { to: "/insights", label: "Insights & Actions", icon: Sparkles },
   { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
   { to: "/intelligence", label: "Intelligence", icon: Radar },
