@@ -92,7 +92,7 @@ export default function ProductIntelligencePage() {
   const ask = (q?: string) => setAsked((q ?? question).trim());
 
   return (
-    <div>
+    <div className="cascade">
       <PageHeader
         title="Product Intelligence"
         subtitle="Grounded in your analytics — every number traceable to a measured table, or the answer says so."

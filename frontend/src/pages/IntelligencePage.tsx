@@ -306,7 +306,7 @@ export default function IntelligencePage() {
   const proc = useQuery({ queryKey: ["procurement"], queryFn: intelligenceApi.procurement });
 
   return (
-    <div className="space-y-6">
+    <div className="cascade space-y-6">
       <PageHeader
         title="Intelligence"
         subtitle="Where the business stands: inventory efficiency, spend concentration, single-source dependencies, price drift, and negotiation levers — all computed from live data."

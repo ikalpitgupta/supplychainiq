@@ -29,7 +29,7 @@ export default function DataQualityPage() {
   const r = q.data;
 
   return (
-    <div>
+    <div className="cascade">
       <PageHeader
         title="Data Quality"
         subtitle="Automated scans of the live database — every analytics number is only as good as the data beneath it."

@@ -75,7 +75,7 @@ export default function ScenarioSimulatorPage() {
   const [tab, setTab] = useState<LabTab>("network");
 
   return (
-    <div>
+    <div className="cascade">
       <PageHeader
         title="Scenario Lab"
         subtitle="Ask “what happens if the business situation changes?” — real recalculation, no simulated delays."

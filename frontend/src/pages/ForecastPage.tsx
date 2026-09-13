@@ -50,7 +50,7 @@ export default function ForecastPage() {
   const productMeta = options.data?.items.find((o) => o.id === effectiveId);
 
   return (
-    <div>
+    <div className="cascade">
       <PageHeader
         title="Demand Forecast"
         subtitle="Explainable per-product forecasting with held-out accuracy metrics."

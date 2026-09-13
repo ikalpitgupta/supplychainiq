@@ -50,7 +50,7 @@ export default function ProductDetailPage() {
   const m = d.metrics;
 
   return (
-    <div>
+    <div className="cascade">
       <Link to="/inventory" className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-ink/50 hover:text-ink">
         <ArrowLeft className="h-3.5 w-3.5" /> Back to Inventory
       </Link>

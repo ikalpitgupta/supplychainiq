@@ -25,7 +25,7 @@ export default function RootCausePage() {
   const q = useQuery({ queryKey: ["rca-analysis", days], queryFn: () => rcaApi.analysis(days) });
 
   return (
-    <div className="space-y-6">
+    <div className="cascade space-y-6">
       <PageHeader
         title="Root Cause Analysis"
         subtitle="The engine investigates contributing factors behind material metric movements — evidence first, causal language only where the data supports it."

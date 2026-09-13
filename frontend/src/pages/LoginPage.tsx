@@ -52,7 +52,7 @@ export default function LoginPage() {
         <div className="absolute -bottom-40 left-1/3 h-[460px] w-[460px] rounded-full bg-brand-500/10 blur-[130px]" />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl items-center gap-10 px-4 py-8 md:px-10 lg:gap-14">
+      <div className="cascade relative z-10 mx-auto flex min-h-screen w-full max-w-7xl items-center gap-10 px-4 py-8 md:px-10 lg:gap-14">
         {/* Left: floating hero element — the SupplyChainIQ diorama */}
         <div className="relative hidden flex-1 flex-col lg:flex">
           <LogoMark size="lg" tagline="Fashion Commerce Supply Chain Intelligence" />

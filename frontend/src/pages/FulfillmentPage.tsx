@@ -64,7 +64,7 @@ export default function FulfillmentPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="cascade space-y-6">
       <PageHeader
         title="Fulfillment"
         subtitle="Customer-order flow (pick → pack → dispatch) and the replenishment pipeline behind it."

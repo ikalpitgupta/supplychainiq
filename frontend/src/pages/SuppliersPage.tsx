@@ -26,7 +26,7 @@ export default function SuppliersPage() {
   const weights = q.data?.weights;
 
   return (
-    <div>
+    <div className="cascade">
       <PageHeader
         title="Suppliers"
         subtitle="Scored supplier base — delivery, quality, cost, and reliability in one view."

@@ -31,7 +31,7 @@ export default function InboundPage() {
   const error = procurement.error || catalog.error || pricing.error || promos.error;
 
   return (
-    <div className="space-y-8">
+    <div className="cascade space-y-8">
       <PageHeader
         title="Inbound Intelligence"
         subtitle="Procurement, catalog quality, pricing, and promotions — where supplier and catalog decisions become inventory and margin outcomes."

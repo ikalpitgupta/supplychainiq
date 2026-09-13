@@ -21,7 +21,7 @@ export default function ReturnsPage() {
     : undefined;
 
   return (
-    <div className="space-y-6">
+    <div className="cascade space-y-6">
       <PageHeader
         title="Returns"
         subtitle="Measured from the customer order book — return rates, reasons, dispositions, and what they cost, over the last 90 days."

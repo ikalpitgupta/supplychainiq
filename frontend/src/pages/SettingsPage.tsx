@@ -178,7 +178,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div>
+    <div className="cascade">
       <PageHeader
         title="Settings"
         subtitle="Your account, appearance, and business parameters."

@@ -42,7 +42,7 @@ export default function RecommendationsPage() {
   const items = (q.data?.items ?? []).filter((r) => r.severity === tab);
 
   return (
-    <div>
+    <div className="cascade">
       <PageHeader
         title="Insights & Actions"
         subtitle="The decision center — what to order, when, how much, and from whom."

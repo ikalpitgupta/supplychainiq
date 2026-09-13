@@ -52,7 +52,7 @@ export default function InventoryPage() {
   };
 
   return (
-    <div>
+    <div className="cascade">
       <PageHeader
         title="Inventory"
         subtitle="Current stock position with reorder math for every product."

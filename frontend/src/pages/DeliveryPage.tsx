@@ -70,7 +70,7 @@ export default function DeliveryPage() {
   const sla = outbound.data;
 
   return (
-    <div className="space-y-6">
+    <div className="cascade space-y-6">
       <PageHeader
         title="Delivery"
         subtitle="Inbound delivery performance — are suppliers delivering what was ordered, on time, at the agreed cost?"
