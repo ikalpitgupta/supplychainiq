@@ -1,5 +1,7 @@
 """Application configuration loaded from environment variables (.env supported)."""
 from functools import lru_cache
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,6 +27,14 @@ class Settings(BaseSettings):
     default_holding_cost_rate: float = 0.20    # annual holding cost as fraction of unit cost
     default_demand_window_days: int = 90       # window for average daily demand
     default_forecast_days: int = 30
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _empty_env_to_default(cls, v, info):
+        """Treat empty-string env vars (added but left blank in a host UI) as unset."""
+        if isinstance(v, str) and v.strip() == "":
+            return cls.model_fields[info.field_name].default
+        return v
 
 
 @lru_cache
