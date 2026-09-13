@@ -1,0 +1,31 @@
+# Koyeb configuration — free tier, never expires, auto-deploys on git push.
+#
+# Deploy: koyeb.com → sign up (no credit card needed for GitHub-verified
+# accounts) → Create Web Service → GitHub → pick this repo → Koyeb detects
+# the Dockerfile and this file. Every `git push` redeploys automatically.
+#
+# Free tier reality:
+#   • 0.1 vCPU / 512 MB — enough to run, but first boot seeds the database
+#     and can take several minutes. Later boots are fast.
+#   • Scales to zero when idle; cold start is seconds (faster than Render).
+#   • No persistent disk: the SQLite database resets on redeploy. Auto-seed
+#     restores the demo on boot. For persistence, set DATABASE_URL to a free
+#     Neon/Supabase Postgres (never expires):
+#     postgresql+psycopg2://user:pass@host/db
+service:
+  name: supplychainiq
+  type: web
+  ports:
+    - port: 8000
+      protocol: http
+  routes:
+    - path: /
+  health_checks:
+    - http:
+        path: /api/health
+        port: 8000
+  env:
+    - key: PORT
+      value: "8000"
+    - key: CORS_ORIGINS
+      value: "*"

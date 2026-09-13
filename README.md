@@ -210,19 +210,33 @@ cd frontend && npm test                       # 33 tests: formatting + CSV utils
 
 ## 10. Deploy (free)
 
-The whole app ships as **one container**: FastAPI serves the API and the built frontend on the same origin (the frontend uses relative `/api` paths, so no CORS or env wiring needed).
+The whole app ships as **one container**: FastAPI serves the API and the built frontend on the same origin (the frontend uses relative `/api` paths, so no CORS or env wiring needed). Auto-seed on first boot means a fresh database becomes a fully working demo with no manual step.
+
+### Which free host?
+
+| Host | Card needed | Expires | Sleeps | Auto-deploy on push |
+|---|---|---|---|---|
+| **Koyeb** (recommended) | Usually no (GitHub-verified) | Never | Scale-to-zero, fast wake | Yes — `koyeb.yaml` included |
+| Render | No | Never | ~15 min idle → ~50 s wake | Yes — `render.yaml` included |
+| HF Spaces (Docker) | No | Never | 48 h idle | Yes | *(Docker SDK moved to paid in 2026 — listed for completeness)* |
+| Fly.io / Railway | Card / trial | — | — | — | *(free tiers retired)* |
+
+Either way: push to GitHub → connect the repo on the host → apply. Every `git push` redeploys automatically, so future updates are just `git push`.
+
+### Koyeb (recommended — never expires, no card)
+
+1. Sign up at [koyeb.com](https://www.koyeb.com) with GitHub.
+2. **Create Web Service** → GitHub → select this repo.
+3. Koyeb detects the `Dockerfile` and `koyeb.yaml` → **Deploy**.
 
 ### Render (one-click blueprint)
 
-1. Push this repo to GitHub (already done).
-2. Go to [render.com](https://render.com) → **New → Blueprint** → select the repo.
-3. Render reads `render.yaml` and provisions a free Docker web service. Done.
+1. Go to [render.com](https://render.com) → **New → Blueprint** → select the repo.
+2. Render reads `render.yaml` and provisions the service. Done.
 
-Notes on the free tier:
+### Persistence on either host
 
-- **Auto-seed**: on first boot an empty database is detected and seeded with the deterministic demo dataset — no manual seed step.
-- **Cold starts**: the free service sleeps after ~15 min idle; the first request takes ~50 s to wake.
-- **Database**: the in-container SQLite fallback works forever but is ephemeral (resets on redeploy). Point `DATABASE_URL` at a free external Postgres (e.g. [Neon](https://neon.tech) or [Supabase](https://supabase.com)) for persistence across redeploys — format: `postgresql+psycopg2://user:pass@host/db`.
+The in-container SQLite fallback works forever but is ephemeral (resets on redeploy/sleep-wake). Point `DATABASE_URL` at a free external Postgres — [Neon](https://neon.tech) or [Supabase](https://supabase.com), both never expire — format: `postgresql+psycopg2://user:pass@host/db`.
 
 ### Docker (any host)
 
