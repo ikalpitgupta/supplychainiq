@@ -73,4 +73,16 @@ except Exception:  # pragma: no cover
     frontend_dist = None
 
 if frontend_dist is not None:
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def spa_fallback(full_path: str):
+        """SPA fallback: serve real files when they exist, index.html otherwise,
+        so deep links like /demo or /inventory work on a fresh browser load."""
+        dist_root = frontend_dist.resolve()
+        candidate = (dist_root / full_path).resolve() if full_path else dist_root / "index.html"
+        if str(candidate).startswith(str(dist_root)) and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(dist_root / "index.html")
+
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
