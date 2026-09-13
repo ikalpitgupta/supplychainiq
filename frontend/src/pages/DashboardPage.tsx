@@ -29,7 +29,7 @@ import { PiInsightCard } from "../components/shared/PiInsightCard";
 import { WhyModal } from "../components/shared/WhyModal";
 import type { WhyStep } from "../components/shared/WhyModal";
 import { DemandForecastChart, HealthDonut } from "../components/charts";
-import { Stagger, StaggerItem, useReducedMotion } from "../components/motion";
+import { Stagger, StaggerItem } from "../components/motion";
 import { formatDate, formatINR, formatNumber, formatPct } from "../utils/format";
 import type { DashboardData, HealthSlice, KpiValue, Recommendation } from "../types";
 
@@ -51,7 +51,7 @@ const INSIGHT_ICONS: Record<string, React.ReactNode> = {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = false;
   const { category, period, setCategory, setPeriod } = useDashboardFilters();
   const [healthFilter, setHealthFilter] = useState<string | null>(null);
   const [whyKpi, setWhyKpi] = useState<{ title: string; steps: WhyStep[]; verdict: string } | null>(null);
@@ -462,7 +462,7 @@ function weakestComponent(hs: NonNullable<DashboardData["health_score"]>): strin
 
 /** Section shell: a decision question, its one-line intent, then the content. */
 function Section({ heading, lead, children }: { heading: string; lead: string; children: React.ReactNode }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
   return (
     <section aria-label={heading}>
       <motion.div
@@ -498,7 +498,7 @@ function ImpactStat({ label, value, note, tone, icon }: {
 }
 
 function RevealList({ items }: { items: { icon: string; tone: string; text: string }[] }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
   return (
     <ul className="space-y-2">
       {items.map((ins, i) => (

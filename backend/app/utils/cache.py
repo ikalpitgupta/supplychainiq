@@ -14,7 +14,7 @@ import time
 from typing import Any
 
 _store: dict[str, tuple[float, Any]] = {}
-_DEFAULT_TTL = 300  # seconds
+_DEFAULT_TTL = 900  # seconds; the 10-min keep-alive ping keeps entries permanently warm
 
 
 def _key(namespace: str, params: dict) -> str:

@@ -1,5 +1,5 @@
 // Supply Chain Health Score — animated ring gauge + explainable components.
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import { Activity } from "lucide-react";
 import { Card, CardBody, CardHeader } from "../ui";
@@ -9,7 +9,7 @@ import type { DashboardData } from "../../types";
 import { AnimatedNumber, EASE } from "../motion";
 
 export function HealthScoreCard({ data }: { data: DashboardData["health_score"] }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
   const [whyOpen, setWhyOpen] = useState(false);
   const R = 52;
   const C = 2 * Math.PI * R;

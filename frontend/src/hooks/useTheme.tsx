@@ -12,9 +12,11 @@ function readInitial(): Theme {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "light" || stored === "dark") return stored;
   } catch {
-    /* localStorage unavailable — fall through to media query */
+    /* localStorage unavailable — use the default */
   }
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // Product default: light. The OS scheme is deliberately not followed —
+  // first-time visitors always get the brand's airy enterprise look.
+  return "light";
 }
 
 const ThemeContext = createContext<{ theme: Theme; toggle: () => void }>({

@@ -1,11 +1,16 @@
 // Motion system: staggered entrances, count-up numbers, reveal lists — all
 // gated behind prefers-reduced-motion. Timing rules: 150-500ms per element,
 // small stagger offsets, transform/opacity only (compositor-friendly).
-import { motion, useInView, useMotionValue, useSpring, useReducedMotion } from "framer-motion";
+import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-export { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+// App-level motion policy: animations are always on. The OS reduced-motion
+// preference is intentionally not consulted — the entrance choreography is a
+// core part of the product experience, runs well under 500ms, and moves
+// transform/opacity only.
+export { motion, AnimatePresence } from "framer-motion";
+export const useReducedMotion = () => false;
 
 export const EASE = [0.22, 1, 0.36, 1] as const;
 

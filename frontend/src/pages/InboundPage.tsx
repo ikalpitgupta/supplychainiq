@@ -14,7 +14,7 @@ import {
   Badge, Card, CardBody, CardHeader, ErrorState, SkeletonCard, Table, TD, TH, THead, TR,
 } from "../components/ui";
 import { KpiCard, PageHeader } from "../components/shared";
-import { Stagger, StaggerItem, useReducedMotion } from "../components/motion";
+import { Stagger, StaggerItem } from "../components/motion";
 import { formatINR, formatNumber, formatPct } from "../utils/format";
 import type {
   CampaignStats, CatalogCategoryQuality, CatalogQuality, InboundSupplierRisk, PriceMove,
@@ -368,7 +368,7 @@ function HeadlineStrip({ procurement, catalog, pricing, promos }: {
 function Section({ icon, n, title, lead, children }: {
   icon: React.ReactNode; n: string; title: string; lead: string; children: React.ReactNode;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
   return (
     <StaggerItem>
       <section aria-label={title}>

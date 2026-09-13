@@ -55,17 +55,6 @@
   }
 }
 
-/* Respect users who prefer reduced motion: animations settle instantly. */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
 /* ---------------------------------------------------------------------------
    Entrance cascade: page sections fade-and-rise in sequence when a page or its
    async data mounts. Pure CSS (compositor-friendly), auto-replays on remount,

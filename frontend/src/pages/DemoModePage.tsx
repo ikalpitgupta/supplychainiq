@@ -5,7 +5,7 @@
 // reduced-motion-aware, and controls are Next / Previous / Skip throughout.
 import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity, ArrowRight, Beaker, ChevronLeft, ChevronRight, CircleCheck,
   CircleSlash, FlaskConical, Lightbulb, Play, RotateCcw, Scale, TrendingDown, X,
@@ -24,7 +24,7 @@ const fmt = (v: number | null, format: DemoMetric["format"]) => {
 };
 
 function MetricRow({ m, delay }: { m: DemoMetric; delay: number }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
   const moved = m.prior != null && m.recent != null;
   const worse = moved && (m.recent as number) > (m.prior as number);
   return (
@@ -56,7 +56,7 @@ function MetricRow({ m, delay }: { m: DemoMetric; delay: number }) {
 }
 
 function StepBody({ step }: { step: DemoStep }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
   if (step.metrics) {
     return (
       <div>
@@ -264,7 +264,7 @@ export default function DemoModePage() {
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
   const [done, setDone] = useState(false);
-  const reduce = useReducedMotion();
+  const reduce = false;
 
   const script = useQuery({ queryKey: ["demo-script"], queryFn: demoApi.script, staleTime: 60_000 });
   const steps = script.data?.steps ?? [];

@@ -3,16 +3,14 @@ from fastapi import APIRouter, Depends, Query
 
 from app.database.session import get_db
 from app.services.product_intelligence_service import (
-    executive_summary, experiment_ideas, explain, llm_polish, validate_recommendation)
-from app.utils.cache import cached
+    executive_summary, experiment_ideas, explain, llm_polish, validate_recommendation, _grounds)
 
 router = APIRouter(prefix="/pi", tags=["product-intelligence"])
 
 
 @router.get("/questions")
 def pi_questions(db=Depends(get_db)):
-    from app.services.product_intelligence_service import _grounds
-    g = cached("pi_grounds", {}, lambda: _grounds(db))
+    g = _grounds(db)
     return {
         "questions": [
             {"id": "delivery", "q": "Why is delivery performance declining?",

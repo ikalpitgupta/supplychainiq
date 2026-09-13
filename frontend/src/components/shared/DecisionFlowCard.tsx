@@ -1,6 +1,6 @@
 // Decision-engine flow: each reasoning step reveals in sequence (<2s total),
 // then the recommendation lands. Reduced motion shows everything instantly.
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { ArrowDown, ClipboardList, Check } from "lucide-react";
 import { Badge, Button, Card, CardBody, CardHeader } from "../ui";
@@ -17,7 +17,7 @@ export function DecisionFlowCard({ d, onCreatePo }: {
   d: ProductDetail;
   onCreatePo: () => void;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
   const [whyOpen, setWhyOpen] = useState(false);
   const decision = d.decision;
   const m = d.metrics;

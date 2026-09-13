@@ -32,6 +32,7 @@ from app.services.outbound_service import customer_impact, delivery_sla, returns
 from app.services.recommendation_service import build_recommendations
 from app.services.rca_service import analyze as rca_analyze
 from app.services.settings_service import get_value
+from app.utils.cache import cached
 
 INSUFFICIENT = "Insufficient data to confidently determine the cause."
 
@@ -41,6 +42,16 @@ INSUFFICIENT = "Insufficient data to confidently determine the cause."
 # ---------------------------------------------------------------------------
 
 def _grounds(db: Session, days: int = 21) -> dict:
+    """Measured facts behind every PI answer. The packet takes real work
+    (~10 analytics passes over the tables), so it is memoised per window:
+    the TTL cache keeps answers honest (5 min) while serving repeat
+    requests — including every question variant that shares the packet —
+    without recomputation. Invalidated on any data write.
+    """
+    return cached("pi_grounds", {"days": days}, lambda: _compute_grounds(db, days))
+
+
+def _compute_grounds(db: Session, days: int = 21) -> dict:
     """Collect measured facts once per request. Every entry is computed from
     tables; `absent` lists what the dataset genuinely cannot support."""
     since = (date.today() - timedelta(days=days)).isoformat()

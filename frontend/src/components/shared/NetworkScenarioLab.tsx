@@ -4,7 +4,7 @@
 // so the animation represents arithmetic in flight, not decoration.
 import { useDeferredValue, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   AlertTriangle, ArrowDown, Boxes, FlaskConical, GitCompareArrows, IndianRupee,
   Landmark, Package, Play, RotateCcw, TrendingUp, Truck, Warehouse,
@@ -73,7 +73,7 @@ const pct = (v: number) => `${v >= 0 ? "+" : ""}${v}%`;
 const days = (v: number) => `${v >= 0 ? "+" : ""}${v}d`;
 
 function StageRow({ stage, index }: { stage: ScenarioStage; index: number }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
   const fmt = fmtFor(stage.unit);
   return (
     <motion.div

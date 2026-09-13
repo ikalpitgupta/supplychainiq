@@ -1,6 +1,6 @@
 // "Why?" modal — the explainability surface for every KPI and recommendation.
 // Receives a structured packet (steps with labels/values) and a verdict line.
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect } from "react";
 import { EASE } from "../motion";
@@ -20,7 +20,7 @@ export function WhyModal({ open, onClose, title, steps, verdict, children }: {
   verdict?: string;
   children?: React.ReactNode; // optional extra content (e.g. supplier trade-offs)
 }) {
-  const reduce = useReducedMotion();
+  const reduce = false;
 
   useEffect(() => {
     if (!open) return;
