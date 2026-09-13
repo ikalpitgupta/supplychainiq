@@ -208,7 +208,31 @@ cd backend && python -m pytest tests/ -q      # 118 tests: formulas + APIs
 cd frontend && npm test                       # 33 tests: formatting + CSV utils
 ```
 
-## 10. Demo Credentials
+## 10. Deploy (free)
+
+The whole app ships as **one container**: FastAPI serves the API and the built frontend on the same origin (the frontend uses relative `/api` paths, so no CORS or env wiring needed).
+
+### Render (one-click blueprint)
+
+1. Push this repo to GitHub (already done).
+2. Go to [render.com](https://render.com) → **New → Blueprint** → select the repo.
+3. Render reads `render.yaml` and provisions a free Docker web service. Done.
+
+Notes on the free tier:
+
+- **Auto-seed**: on first boot an empty database is detected and seeded with the deterministic demo dataset — no manual seed step.
+- **Cold starts**: the free service sleeps after ~15 min idle; the first request takes ~50 s to wake.
+- **Database**: the in-container SQLite fallback works forever but is ephemeral (resets on redeploy). Point `DATABASE_URL` at a free external Postgres (e.g. [Neon](https://neon.tech) or [Supabase](https://supabase.com)) for persistence across redeploys — format: `postgresql+psycopg2://user:pass@host/db`.
+
+### Docker (any host)
+
+```bash
+docker build -t supplychainiq .
+docker run -p 8000:8000 -e PORT=8000 supplychainiq
+# → http://localhost:8000 (frontend + API)
+```
+
+## 11. Demo Credentials
 
 | Email | Password | Role |
 |---|---|---|
