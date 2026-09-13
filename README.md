@@ -214,16 +214,23 @@ The whole app ships as **one container**: FastAPI serves the API and the built f
 
 ### Which free host?
 
-| Host | Card needed | Expires | Sleeps | Auto-deploy on push |
+| Host | Card needed | Expires | Sleeps | Config |
 |---|---|---|---|---|
-| **Koyeb** (recommended) | Usually no (GitHub-verified) | Never | Scale-to-zero, fast wake | Yes — `koyeb.yaml` included |
-| Render | No | Never | ~15 min idle → ~50 s wake | Yes — `render.yaml` included |
-| HF Spaces (Docker) | No | Never | 48 h idle | Yes | *(Docker SDK moved to paid in 2026 — listed for completeness)* |
-| Fly.io / Railway | Card / trial | — | — | — | *(free tiers retired)* |
+| **ClawCloud Run** (recommended) | No (GitHub ≥180 days) | Never — $5/mo credit | **No** — always on | Any Docker host |
+| Koyeb | Usually no | Never | Scale-to-zero | `koyeb.yaml` included |
+| Render | No | Never | ~15 min idle → ~50 s wake | `render.yaml` included |
+| Back4App Containers | No | Never (600 h/mo) | Auto-sleep on idle | Any Docker host |
 
-Either way: push to GitHub → connect the repo on the host → apply. Every `git push` redeploys automatically, so future updates are just `git push`.
+Every option here redeploys automatically on `git push`. CI (`.github/workflows/ci.yml`) runs tests **and a full Docker image build** on every push, so a deploy-breaking change is caught before you deploy.
 
-### Koyeb (recommended — never expires, no card)
+### ClawCloud Run (recommended — always on, no cold start)
+
+1. Sign up at [run.claw.cloud](https://run.claw.cloud) with GitHub (account must be ≥180 days old for the monthly $5 credit).
+2. **Launch → App** → connect the repo.
+3. Container settings: **port `8000`**, CPU 1 / RAM 1 GB is plenty. The `$PORT` env is honored automatically.
+4. Deploy — the free $5/mo credit covers one small always-on instance, so the demo **never sleeps** (no 50-second cold starts during an interview).
+
+### Koyeb (never expires, no card)
 
 1. Sign up at [koyeb.com](https://www.koyeb.com) with GitHub.
 2. **Create Web Service** → GitHub → select this repo.
