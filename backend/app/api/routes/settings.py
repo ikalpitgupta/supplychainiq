@@ -23,4 +23,6 @@ def write_settings(payload: SettingsUpdate, db=Depends(get_db)):
 def reset_demo(user: dict = Depends(require_admin), db=Depends(get_db)):
     from app.database.seed import seed_demo_data
     counts = seed_demo_data()
+    from app.utils.cache import clear as clear_cache
+    clear_cache()  # fresh data in, stale analytics out
     return {"message": "Demo data has been reset", "counts": counts}

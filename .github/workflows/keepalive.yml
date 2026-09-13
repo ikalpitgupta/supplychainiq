@@ -1,0 +1,41 @@
+name: Keep-alive ping
+
+# Keeps the Vercel function instance and its in-memory analytics cache warm,
+# and prevents the Neon free-tier compute from auto-suspending. Runs every
+# 10 minutes. Note: GitHub disables cron schedules after ~60 days of repo
+# inactivity - any commit resets the timer.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Ping health + warm analytics cache
+        env:
+          # Override with a repository VARIABLE named PROD_URL if the app moves.
+          PROD_URL: ${{ vars.PROD_URL || 'https://suppychainiq-three.vercel.app' }}
+        run: |
+          set -e
+          echo "Warming $PROD_URL"
+          curl -sf -m 120 "$PROD_URL/api/health" >/dev/null && echo "health: ok"
+
+          TOKEN=$(curl -sf -m 120 -X POST -H "Content-Type: application/json" \
+            -d '{"email":"admin@supplychainiq.com","password":"admin123"}' \
+            "$PROD_URL/api/auth/login" | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
+          echo "login: ok"
+
+          # Heavy endpoints: first call computes + caches (slow), warm calls are instant.
+          for ep in dashboard pi/questions demo/script; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -m 300 \
+              -H "Authorization: Bearer $TOKEN" "$PROD_URL/api/$ep")
+            echo "$ep: $code"
+          done

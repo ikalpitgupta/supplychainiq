@@ -40,8 +40,20 @@ async def lifespan(app: FastAPI):
             if not has_products:
                 logger.info("Empty database detected — seeding demo data...")
                 from app.database.seed import seed_demo_data
-                counts = seed_demo_data()
-                logger.info("Seeded: %s", counts)
+                try:
+                    counts = seed_demo_data()
+                    logger.info("Seeded: %s", counts)
+                except Exception:
+                    # A half-seeded database would keep skipping the seed on every
+                    # boot (products exist) while missing dependent rows. Roll the
+                    # failed attempt back so the next boot can seed cleanly.
+                    from sqlalchemy import delete
+                    for model in (ReturnLine, OutboundOrder, VariantInventory, Warehouse,
+                                  Promotion, Sale, InventoryDaily, PurchaseOrder, Product,
+                                  Supplier, Category, User, Setting):
+                        conn.execute(delete(model))
+                    conn.commit()
+                    raise
         finally:
             if is_postgres:
                 conn.execute(text("SELECT pg_advisory_unlock(918273645)"))

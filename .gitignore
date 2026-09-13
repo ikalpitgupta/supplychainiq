@@ -21,3 +21,7 @@ Thumbs.db
 
 # Tool metadata
 .freebuff/
+.vercel/
+
+.vercel
+.env*

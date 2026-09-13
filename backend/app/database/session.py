@@ -38,9 +38,13 @@ class DatabaseManager:
             engine = create_engine(
                 settings.database_url,
                 pool_pre_ping=True,
-                pool_size=5,
-                max_overflow=5,
-                connect_args={"connect_timeout": 3},
+                # Serverless + Neon: concurrent function invocations each hold a
+                # few pooled connections; keep the footprint small and recycle
+                # aggressively so the Neon pooler never exhausts connection slots.
+                pool_size=3,
+                max_overflow=4,
+                pool_recycle=280,
+                connect_args={"connect_timeout": 5, "application_name": "supplychainiq"},
             )
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))

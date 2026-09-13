@@ -15,6 +15,7 @@ from app.core.security import get_current_user
 from app.database.session import get_db
 from app.models import ImportLog
 from app.services.import_export_service import IMPORTERS, export_csv, preview_import
+from app.utils.cache import clear as clear_cache
 from app.utils.errors import APIError
 
 router = APIRouter(tags=["io"])
@@ -136,6 +137,7 @@ async def import_csv(
     except Exception:  # logging must never break an import
         db.rollback()
 
+    clear_cache()  # analytics caches must not outlive new data
     return report
 
 
