@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle, Bell, Boxes, ChevronDown, Database, FileUp, FlaskConical, GitBranch, Handshake, Info,
   LayoutDashboard, LogOut, Menu, Moon, PackageOpen, PackageSearch, PlayCircle, Search, Settings,
-  Sparkles, Sun, Truck, X,
+  Sparkles, Sun, Truck, X, BrainCircuit,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
@@ -26,6 +26,7 @@ const NAV_PRIMARY = [
   { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
   { to: "/insights", label: "Insights & Actions", icon: Sparkles, badge: true },
   { to: "/root-cause", label: "Root Cause Analysis", icon: GitBranch },
+  { to: "/product-intelligence", label: "Product Intelligence", icon: BrainCircuit },
   { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
 ];
 const NAV_TOOLS = [

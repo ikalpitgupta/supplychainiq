@@ -4,7 +4,8 @@ import type {
   CostCurveResponse, CustomerImpact, DashboardData, DeliverySlaIntel, ForecastResponse, FulfillmentBottleneck,
   FulfillmentData, ImportReport, InboundSummary, InventoryAgingResponse,
   NetworkCompareResponse, NetworkScenarioInputs, NetworkScenarioRun,
-  OutboundActionsResponse, ProcurementLinkage,
+  OutboundActionsResponse, PiExecSummary, PiExperiments, PiInsightAnswer, PiQuestions, PiValidation,
+  ProcurementLinkage,
   PmDecisionLayer, PricingIntel, PromotionsIntel, RcaAnalysis, ReturnsIntel,
   POFormContext, POListResponse, ProductDetail,
   ProductListResponse, ProcurementIntelligenceResponse, RecommendationsResponse,
@@ -195,4 +196,14 @@ export const rcaApi = {
 
 export const pmApi = {
   decisions: () => api<PmDecisionLayer>("/pm/decisions"),
+};
+
+export const piApi = {
+  questions: () => api<PiQuestions>("/pi/questions"),
+  ask: (q: string) => api<PiInsightAnswer>(`/pi/ask?q=${encodeURIComponent(q)}`),
+  validate: (recommendation: string) =>
+    api<PiValidation>(`/pi/validate?recommendation=${encodeURIComponent(recommendation)}`),
+  experiments: (problem?: string) =>
+    api<PiExperiments>(`/pi/experiments${problem ? `?problem=${encodeURIComponent(problem)}` : ""}`),
+  executiveSummary: () => api<PiExecSummary>("/pi/executive-summary"),
 };

@@ -29,6 +29,7 @@ const ScenarioSimulatorPage = lazy(() => import("./pages/ScenarioSimulatorPage")
 const IntelligencePage = lazy(() => import("./pages/IntelligencePage"));
 const InboundPage = lazy(() => import("./pages/InboundPage"));
 const RootCausePage = lazy(() => import("./pages/RootCausePage"));
+const ProductIntelligencePage = lazy(() => import("./pages/ProductIntelligencePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +84,7 @@ function App() {
                   <Route path="/suppliers" element={<SuppliersPage />} />
                   <Route path="/suppliers/:id" element={<SupplierDetailPage />} />
                   <Route path="/insights" element={<InsightsPage />} />
+                  <Route path="/product-intelligence" element={<Suspense fallback={<PageFallback />}><ProductIntelligencePage /></Suspense>} />
                   <Route path="/data-quality" element={<Suspense fallback={<PageFallback />}><DataQualityPage /></Suspense>} />
                   <Route path="/import" element={<Suspense fallback={<PageFallback />}><ImportPageLazy /></Suspense>} />
                   <Route path="/settings" element={<SettingsPage />} />

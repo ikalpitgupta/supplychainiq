@@ -1099,3 +1099,74 @@ export interface NetworkCompareResponse {
   scenarios: NetworkScenarioRun[];
   rows: NetworkCompareRow[];
 }
+
+// ── Product Intelligence (grounded AI layer) ─────────────────────────
+export interface PiConfidence { level: "high" | "medium" | "low"; note: string }
+export interface PiExperiment {
+  hypothesis: string;
+  primary_kpi: string;
+  guardrail?: string;
+  design?: string;
+  secondary_kpis?: string[];
+  sample_size_per_arm?: number;
+  basis?: string;
+}
+export interface PiInsightAnswer {
+  question: string;
+  kind: "insight";
+  insufficient: boolean;
+  insight: string;
+  evidence: (string | null)[];
+  possible_drivers: (string | null)[];
+  recommendation: string;
+  kpi_to_track: string[];
+  experiment: PiExperiment | null;
+  investigate: string[];
+  confidence: PiConfidence;
+  narrative_source?: string;
+  narrative_polished?: string;
+}
+export interface PiValidation {
+  recommendation: string;
+  kind: "validation";
+  supporting_evidence: string[];
+  potential_risks: string[];
+  missing_information: string[];
+  suggested_kpi: string;
+  suggested_experiment: PiExperiment | null;
+  verdict: string;
+  confidence: PiConfidence;
+  narrative_source?: string;
+}
+export interface PiExperimentIdea {
+  problem_id: string;
+  title: string;
+  hypothesis: string;
+  design: string;
+  primary_kpi: string;
+  secondary_kpis: string[];
+  guardrail: string;
+  sample_size_per_arm: number;
+  basis: string;
+}
+export interface PiExperiments {
+  problem: string;
+  kind: "experiments";
+  ideas: PiExperimentIdea[];
+  note: string;
+  detected_problems: string[];
+}
+export interface PiExecSummary {
+  kind: "executive_summary";
+  window_days: number;
+  headline: string;
+  summary: string[];
+  actions: string[];
+  confidence: PiConfidence;
+  not_measured: string[];
+}
+export interface PiQuestions {
+  questions: { id: string; q: string; answerable: boolean }[];
+  detected_problems: string[];
+  data_quality: { score: number; status: string; total_issues: number };
+}
