@@ -79,12 +79,12 @@ export default function AppLayout() {
 
   // The sidebar is fixed dark chrome in both themes — brand anchor.
   const sidebarBody = (onClick?: () => void) => (
-    <div className="flex h-full w-64 flex-col rounded-3xl bg-chrome shadow-float">
-      <div className="flex items-center gap-3 px-5 pb-2 pt-6">
+    <div className="flex h-full w-60 flex-col rounded-3xl bg-chrome shadow-float lg:w-64">
+      <div className="flex items-center gap-3 px-5 pb-1 pt-4">
         <LogoMark tagline="Fashion Commerce Supply Chain Intelligence" />
       </div>
 
-      <nav className="flex-1 space-y-1 px-4 py-2" aria-label="Main navigation">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-2 scrollbar-thin" aria-label="Main navigation">
         {NAV_PRIMARY.map(({ to, label, icon: Icon, end, badge }) => (
           <NavLink
             key={to}
@@ -92,7 +92,7 @@ export default function AppLayout() {
             end={end}
             onClick={onClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${
+              `flex items-center gap-3 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                 isActive ? "bg-surface text-ink shadow-sm" : "text-white/60 hover:bg-white/10 hover:text-white"
               }`
             }
@@ -106,7 +106,7 @@ export default function AppLayout() {
             )}
           </NavLink>
         ))}
-        <p className="px-4 pb-1 pt-4 text-[10px] font-bold uppercase tracking-widest text-white/30">Deep dives</p>
+        <p className="px-4 pb-1 pt-3 text-[10px] font-bold uppercase tracking-widest text-white/30">Deep dives</p>
         {NAV_DEEP.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -122,14 +122,14 @@ export default function AppLayout() {
             <span className="flex-1">{label}</span>
           </NavLink>
         ))}
-        <p className="px-4 pb-1 pt-4 text-[10px] font-bold uppercase tracking-widest text-white/30">Platform</p>
+        <p className="px-4 pb-1 pt-3 text-[10px] font-bold uppercase tracking-widest text-white/30">Platform</p>
         {NAV_TOOLS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             onClick={onClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              `flex items-center gap-3 rounded-full px-4 py-2 text-[13px] font-medium transition-colors ${
                 isActive ? "bg-surface text-ink shadow-sm" : "text-white/50 hover:bg-white/10 hover:text-white"
               }`
             }
@@ -140,21 +140,21 @@ export default function AppLayout() {
         ))}
       </nav>
 
-      <div className="p-4 space-y-3">
+      <div className="space-y-2.5 p-3">
         <button
           onClick={() => { navigate("/demo"); onClick?.(); }}
           className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-lime-300/60"
         >
           <PlayCircle className="h-3.5 w-3.5" /> Run Demo Scenario
         </button>
-        <div className="rounded-3xl bg-lime-300 p-4">
+        <div className="rounded-3xl bg-lime-300 p-3.5">
           <p className="font-display text-base font-semibold text-chrome">Actions required</p>
           <p className="mt-0.5 text-xs leading-relaxed text-chrome/70">
             {recsQ.data ?? 0} recommendation{recsQ.data === 1 ? "" : "s"} waiting on a decision.
           </p>
           <button
             onClick={() => { navigate("/insights"); onClick?.(); }}
-            className="mt-3 w-full rounded-full bg-chrome px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-chrome-soft"
+            className="mt-2.5 w-full rounded-full bg-chrome px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-chrome-soft"
           >
             Review now
           </button>
@@ -170,7 +170,7 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="flex h-screen gap-4 overflow-hidden bg-canvas p-4 transition-colors duration-300 md:gap-5 md:p-6">
+    <div className="flex h-screen gap-3 overflow-hidden bg-canvas p-3 transition-colors duration-300 md:gap-4 md:p-4">
       <aside className="hidden md:block">{sidebarBody()}</aside>
 
       {mobileOpen && (
