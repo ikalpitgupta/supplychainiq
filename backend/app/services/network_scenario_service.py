@@ -160,8 +160,13 @@ def simulate_network(
     fulfillment_risk = min(1.0, overflow_share * 2)  # saturates the readout at 50% overflow
 
     # ── Stage 5 · Delivery SLA blend ────────────────────────────────────────
-    local_share = min(1.0, home_allocation / 100.0) * (1 - routing["distant_share"]) \
-        if home_allocation < 100 else (1 - routing["distant_share"])
+    # home_allocation is a lever on the MEASURED local share: 100 = today,
+    # <100 starves the home DC, >100 models pre-positioning (up to 150 =
+    # everything serviceable locally). Symmetric so improvements, not just
+    # degradations, can be simulated.
+    local_share = (min(1.0, home_allocation / 100.0) * (1 - routing["distant_share"])
+                   if home_allocation <= 100
+                   else min(1.0, (home_allocation / 100.0) * (1 - routing["distant_share"])))
     local_share = max(0.0, min(1.0, local_share))
     distant_share = 1 - local_share
     late_rate = (local_share * routing["local_late_rate"]

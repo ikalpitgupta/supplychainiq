@@ -3,6 +3,7 @@ import type {
   AbcXyzResponse, AnalyticsData, AnomaliesResponse, CatalogQuality, ControlTowerResponse,
   CostCurveResponse, CustomerImpact, DashboardData, DeliverySlaIntel, ForecastResponse, FulfillmentBottleneck,
   FulfillmentData, ImportReport, InboundSummary, InventoryAgingResponse,
+  DemoScript,
   NetworkCompareResponse, NetworkScenarioInputs, NetworkScenarioRun,
   OutboundActionsResponse, PiExecSummary, PiExperiments, PiInsightAnswer, PiQuestions, PiValidation,
   ProcurementLinkage,
@@ -206,4 +207,8 @@ export const piApi = {
   experiments: (problem?: string) =>
     api<PiExperiments>(`/pi/experiments${problem ? `?problem=${encodeURIComponent(problem)}` : ""}`),
   executiveSummary: () => api<PiExecSummary>("/pi/executive-summary"),
+};
+
+export const demoApi = {
+  script: () => api<DemoScript>("/demo/script"),
 };

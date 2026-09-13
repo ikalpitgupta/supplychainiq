@@ -29,7 +29,7 @@ def get_anomalies(threshold: float = Query(default=2.5, ge=1.0, le=5.0), db=Depe
 def get_network_scenario(
     demand_pct: float = Query(default=0.0, ge=-50, le=100),
     lead_delta_days: int = Query(default=0, ge=-5, le=30),
-    home_allocation: float = Query(default=100.0, ge=40, le=100),
+    home_allocation: float = Query(default=100.0, ge=40, le=150),
     service_level: float | None = Query(default=None, ge=0.5, le=0.999),
     promo_uplift_pct: float = Query(default=0.0, ge=0, le=60),
     promo_discount: float = Query(default=0.0, ge=0, le=50),
@@ -49,7 +49,7 @@ def get_network_scenario(
 def get_network_compare(
     a_demand_pct: float = Query(default=0.0, ge=-50, le=100),
     a_lead_delta_days: int = Query(default=0, ge=-5, le=30),
-    a_home_allocation: float = Query(default=100.0, ge=40, le=100),
+    a_home_allocation: float = Query(default=100.0, ge=40, le=150),
     a_service_level: float | None = Query(default=None, ge=0.5, le=0.999),
     a_promo_uplift_pct: float = Query(default=0.0, ge=0, le=60),
     a_promo_discount: float = Query(default=0.0, ge=0, le=50),
@@ -57,7 +57,7 @@ def get_network_compare(
     a_label: str = Query(default="A", max_length=60),
     b_demand_pct: float = Query(default=0.0, ge=-50, le=100),
     b_lead_delta_days: int = Query(default=0, ge=-5, le=30),
-    b_home_allocation: float = Query(default=100.0, ge=40, le=100),
+    b_home_allocation: float = Query(default=100.0, ge=40, le=150),
     b_service_level: float | None = Query(default=None, ge=0.5, le=0.999),
     b_promo_uplift_pct: float = Query(default=0.0, ge=0, le=60),
     b_promo_discount: float = Query(default=0.0, ge=0, le=50),

@@ -142,7 +142,7 @@ export default function ReturnsPage() {
                     <TD className="text-right text-ink/70">{p.returns.toLocaleString()}</TD>
                     <TD className="text-right">
                       {p.return_rate_pct != null ? (
-                        <Badge tone={p.return_rate_pct >= d.return_rate_pct! * 1.5 ? "red" : p.return_rate_pct >= d.return_rate_pct! ? "yellow" : "gray"} dot>
+                        <Badge tone={p.return_rate_pct >= (d.return_rate_pct ?? 0) * 1.5 ? "red" : p.return_rate_pct >= (d.return_rate_pct ?? 0) ? "yellow" : "gray"} dot>
                           {p.return_rate_pct}%
                         </Badge>
                       ) : "—"}

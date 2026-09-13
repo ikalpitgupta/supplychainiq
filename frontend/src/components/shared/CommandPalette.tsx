@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeftRight, Boxes, BrainCircuit, CornerDownLeft, Database, FlaskConical, FileUp, GitBranch,
-  Handshake, LayoutDashboard, Package, PackageOpen, PackageSearch, Radar, Search, Settings,
+  Handshake, LayoutDashboard, Package, PackageOpen, PackageSearch, Play, Radar, Search, Settings,
   Sparkles, Truck, TrendingUp, Zap,
 } from "lucide-react";
 import { productsApi, suppliersApi } from "../../api/endpoints";
@@ -37,6 +37,7 @@ const PAGES: Array<{ to: string; label: string; icon: React.ComponentType<{ clas
   { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
   { to: "/root-cause", label: "Root Cause Analysis", icon: GitBranch },
   { to: "/product-intelligence", label: "Product Intelligence", icon: BrainCircuit },
+  { to: "/demo", label: "Interview Demo — the 2-minute story", icon: Play },
   { to: "/insights", label: "Insights & Actions", icon: Sparkles },
   { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
   { to: "/intelligence", label: "Intelligence", icon: Radar },

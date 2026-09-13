@@ -1170,3 +1170,50 @@ export interface PiQuestions {
   detected_problems: string[];
   data_quality: { score: number; status: string; total_issues: number };
 }
+
+// ── Interview Demo Mode ───────────────────────────────────────────────
+export interface DemoMetric {
+  label: string;
+  prior: number | null;
+  recent: number | null;
+  format: "pct1" | "inr" | "int";
+  basis: string;
+}
+export interface DemoStep {
+  id: string;
+  kicker: string;
+  title: string;
+  narrative: string;
+  metrics?: DemoMetric[];
+  chain?: { label: string; detail: string; verdict: string }[];
+  detail?: { problem: string; root_cause: string; action: string; impact: string };
+  basis?: string;
+  before_after?: {
+    labels: string[];
+    metrics: { label: string; before: number; after: number; format: DemoMetric["format"]; basis: string }[];
+    note: string;
+  };
+  scores?: { label: string; value: number; max: number; note: string }[];
+  verdict?: string;
+  experiment?: {
+    control: string;
+    variant: string;
+    primary_kpi: string;
+    primary_baseline: number;
+    guardrails: { kpi: string; baseline: number }[];
+    sample_size_per_arm: number;
+    duration_weeks: number;
+    mde_pts: number;
+    basis: string;
+  };
+  options?: { decision: string; state: string; why: string }[];
+  criteria?: string;
+}
+export interface DemoScript {
+  kind: "demo_script";
+  scenario_name: string;
+  window_days: number;
+  region: string;
+  steps: DemoStep[];
+  reproducibility: string;
+}

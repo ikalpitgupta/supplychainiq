@@ -13,7 +13,6 @@ import { recommendationsApi } from "../api/endpoints";
 import { LogoMark } from "../components/LogoMark";
 import { AboutModal } from "../components/shared/AboutModal";
 import { CommandPalette } from "../components/shared/CommandPalette";
-import { DemoTour } from "../components/shared/DemoTour";
 
 // Business journey: DEMAND → INVENTORY → FULFILLMENT → DELIVERY → SUPPLIERS →
 // INSIGHTS & ACTIONS → SCENARIO LAB. Platform tools live in their own group.
@@ -42,7 +41,6 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [tourOpen, setTourOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -125,7 +123,7 @@ export default function AppLayout() {
 
       <div className="p-4 space-y-3">
         <button
-          onClick={() => { setTourOpen(true); onClick?.(); }}
+          onClick={() => { navigate("/demo"); onClick?.(); }}
           className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-lime-300/60"
         >
           <PlayCircle className="h-3.5 w-3.5" /> Run Demo Scenario
@@ -275,7 +273,6 @@ export default function AppLayout() {
       </div>
 
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
-      <DemoTour open={tourOpen} onClose={() => setTourOpen(false)} />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
