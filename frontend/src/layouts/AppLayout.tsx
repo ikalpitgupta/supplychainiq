@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle, Bell, Boxes, ChevronDown, Database, FileUp, FlaskConical, GitBranch, Handshake, Info,
-  LayoutDashboard, LogOut, Menu, Moon, PackageOpen, PackageSearch, PlayCircle, Search, Settings,
-  Sparkles, Sun, Truck, X, BrainCircuit,
+  AlertTriangle, ArrowLeftRight, Bell, Boxes, ChevronDown, Database, FileUp, FlaskConical, GitBranch,
+  Handshake, Info, LayoutDashboard, LogOut, Menu, Moon, PackageOpen, PackageSearch, PlayCircle,
+  Search, Settings, Sparkles, Sun, Truck, X, BrainCircuit,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
@@ -15,18 +15,21 @@ import { AboutModal } from "../components/shared/AboutModal";
 import { CommandPalette } from "../components/shared/CommandPalette";
 
 // Business journey: DEMAND → INVENTORY → FULFILLMENT → DELIVERY → SUPPLIERS →
-// INSIGHTS & ACTIONS → SCENARIO LAB. Platform tools live in their own group.
+// INSIGHTS & ACTIONS → SCENARIO LAB. Deep dives + platform tools live in their own groups.
 const NAV_PRIMARY = [
   { to: "/", label: "Command Center", icon: LayoutDashboard, end: true },
   { to: "/inventory", label: "Inventory", icon: Boxes },
   { to: "/fulfillment", label: "Fulfillment", icon: PackageSearch },
   { to: "/delivery", label: "Delivery", icon: Truck },
   { to: "/suppliers", label: "Suppliers", icon: Handshake },
-  { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
+  { to: "/returns", label: "Returns", icon: ArrowLeftRight },
   { to: "/insights", label: "Insights & Actions", icon: Sparkles, badge: true },
-  { to: "/root-cause", label: "Root Cause Analysis", icon: GitBranch },
-  { to: "/product-intelligence", label: "Product Intelligence", icon: BrainCircuit },
   { to: "/simulator", label: "Scenario Lab", icon: FlaskConical },
+];
+const NAV_DEEP = [
+  { to: "/root-cause", label: "Root Cause Analysis", icon: GitBranch },
+  { to: "/inbound", label: "Inbound Intelligence", icon: PackageOpen },
+  { to: "/product-intelligence", label: "Product Intelligence", icon: BrainCircuit },
 ];
 const NAV_TOOLS = [
   { to: "/data-quality", label: "Data Quality", icon: Database },
@@ -101,6 +104,22 @@ export default function AppLayout() {
                 {recsQ.data}
               </span>
             )}
+          </NavLink>
+        ))}
+        <p className="px-4 pb-1 pt-4 text-[10px] font-bold uppercase tracking-widest text-white/30">Deep dives</p>
+        {NAV_DEEP.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            onClick={onClick}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-full px-4 py-2 text-[13px] font-medium transition-colors ${
+                isActive ? "bg-surface text-ink shadow-sm" : "text-white/50 hover:bg-white/10 hover:text-white"
+              }`
+            }
+          >
+            <Icon className="h-4 w-4" />
+            <span className="flex-1">{label}</span>
           </NavLink>
         ))}
         <p className="px-4 pb-1 pt-4 text-[10px] font-bold uppercase tracking-widest text-white/30">Platform</p>

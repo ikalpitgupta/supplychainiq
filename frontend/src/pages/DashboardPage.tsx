@@ -25,6 +25,7 @@ import {
 import { KpiCard, PageHeader, SeverityBadge, StatusBadge } from "../components/shared";
 import { HealthScoreCard } from "../components/shared/HealthScoreCard";
 import { RootCauseChainCard } from "../components/shared/RootCauseChainCard";
+import { PiInsightCard } from "../components/shared/PiInsightCard";
 import { WhyModal } from "../components/shared/WhyModal";
 import type { WhyStep } from "../components/shared/WhyModal";
 import { DemandForecastChart, HealthDonut } from "../components/charts";
@@ -298,6 +299,9 @@ export default function DashboardPage() {
 
             {/* Interactive root-cause chain — every hop carries measured evidence. */}
             <RootCauseChainCard days={30} />
+
+            {/* Contextual Product Intelligence — one grounded answer for the section's question. */}
+            <PiInsightCard question="Why is delivery performance declining?" />
           </Section>
 
           {/* ── Section 3 · What should I do? ──────────────────────────────── */}

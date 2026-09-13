@@ -17,7 +17,7 @@ import {
 import { rcaApi } from "../api/endpoints";
 import { Badge, Card, CardBody, CardHeader, ErrorState, SkeletonCard } from "../components/ui";
 import { PageHeader } from "../components/shared";
-import { Stagger, StaggerItem } from "../components/motion";
+import { EASE, Stagger, StaggerItem } from "../components/motion";
 import type { RcaMetric, RcaProblem, RcaTreeNode } from "../types";
 
 export default function RootCausePage() {
@@ -117,45 +117,53 @@ function ProblemInvestigation({ p }: { p: RcaProblem }) {
             </CardBody>
           </Card>
 
-          {/* Verdict column */}
-          <div className="space-y-4 xl:col-span-2">
+          {/* Verdict column — cascades after the tree: evidence → factor → impact → action */}
+          <Stagger className="space-y-4 xl:col-span-2" delay={0.2}>
             {p.evidence && (
-              <Card>
-                <CardHeader title="Evidence" subtitle={p.evidence.headline} icon={<Search className="h-4 w-4" />} />
-                <CardBody className="space-y-1.5">
-                  {p.evidence.metrics.map((m) => <MetricRow key={m.label} m={m} />)}
-                </CardBody>
-              </Card>
+              <StaggerItem>
+                <Card>
+                  <CardHeader title="Evidence" subtitle={p.evidence.headline} icon={<Search className="h-4 w-4" />} />
+                  <CardBody className="space-y-1.5">
+                    {p.evidence.metrics.map((m) => <MetricRow key={m.label} m={m} />)}
+                  </CardBody>
+                </Card>
+              </StaggerItem>
             )}
 
-            <Card>
-              <CardHeader title="Contributing factor" icon={<GitBranch className="h-4 w-4" />}
-                right={p.contributing_factor.confidence && <Badge tone={p.contributing_factor.confidence === "high" ? "green" : p.contributing_factor.confidence === "medium" ? "yellow" : "gray"}>{p.contributing_factor.confidence} confidence</Badge>} />
-              <CardBody className="space-y-2">
-                <p className="text-sm font-semibold text-ink">{p.contributing_factor.factor}</p>
-                <Badge tone={p.contributing_factor.verdict.includes("primary driver") ? "red"
-                  : p.contributing_factor.verdict.includes("likely") ? "yellow"
-                  : p.contributing_factor.verdict.includes("requires") ? "gray" : "blue"} dot>
-                  {p.contributing_factor.verdict}
-                </Badge>
-                <p className="text-xs leading-relaxed text-ink/70">{p.contributing_factor.impact}</p>
-              </CardBody>
-            </Card>
+            <StaggerItem>
+              <Card>
+                <CardHeader title="Contributing factor" icon={<GitBranch className="h-4 w-4" />}
+                  right={p.contributing_factor.confidence && <Badge tone={p.contributing_factor.confidence === "high" ? "green" : p.contributing_factor.confidence === "medium" ? "yellow" : "gray"}>{p.contributing_factor.confidence} confidence</Badge>} />
+                <CardBody className="space-y-2">
+                  <p className="text-sm font-semibold text-ink">{p.contributing_factor.factor}</p>
+                  <Badge tone={p.contributing_factor.verdict.includes("primary driver") ? "red"
+                    : p.contributing_factor.verdict.includes("likely") ? "yellow"
+                    : p.contributing_factor.verdict.includes("requires") ? "gray" : "blue"} dot>
+                    {p.contributing_factor.verdict}
+                  </Badge>
+                  <p className="text-xs leading-relaxed text-ink/70">{p.contributing_factor.impact}</p>
+                </CardBody>
+              </Card>
+            </StaggerItem>
 
-            <Card>
-              <CardHeader title="Business impact" subtitle="Decomposition estimate — not a guarantee." icon={<Wallet className="h-4 w-4" />} />
-              <CardBody>
-                <p className="text-xs leading-relaxed text-ink/70">{p.business_impact.statement}</p>
-              </CardBody>
-            </Card>
+            <StaggerItem>
+              <Card>
+                <CardHeader title="Business impact" subtitle="Decomposition estimate — not a guarantee." icon={<Wallet className="h-4 w-4" />} />
+                <CardBody>
+                  <p className="text-xs leading-relaxed text-ink/70">{p.business_impact.statement}</p>
+                </CardBody>
+              </Card>
+            </StaggerItem>
 
-            <Card>
-              <CardHeader title="Recommended action" icon={<Lightbulb className="h-4 w-4" />} />
-              <CardBody>
-                <p className="rounded-xl bg-lime-500/10 px-3 py-2.5 text-xs leading-relaxed text-ink">{p.recommendation}</p>
-              </CardBody>
-            </Card>
-          </div>
+            <StaggerItem>
+              <Card>
+                <CardHeader title="Recommended action" icon={<Lightbulb className="h-4 w-4" />} />
+                <CardBody>
+                  <p className="rounded-xl bg-lime-500/10 px-3 py-2.5 text-xs leading-relaxed text-ink">{p.recommendation}</p>
+                </CardBody>
+              </Card>
+            </StaggerItem>
+          </Stagger>
         </div>
       </section>
     </StaggerItem>
@@ -222,7 +230,15 @@ function TreeNode({ node, root = false }: { node: RcaTreeNode; root?: boolean })
           </motion.div>
         )}
       </AnimatePresence>
-      {open && node.children.map((child) => <TreeNode key={child.id} node={child} />)}
+      {open && node.children.map((child, ci) => (
+        <motion.div key={child.id}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.06 + ci * 0.07, duration: 0.24, ease: EASE }}
+        >
+          <TreeNode node={child} />
+        </motion.div>
+      ))}
     </div>
   );
 }
