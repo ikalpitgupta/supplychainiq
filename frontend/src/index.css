@@ -58,7 +58,7 @@
 /* ---------------------------------------------------------------------------
    Entrance cascade: page sections fade-and-rise in sequence when a page or its
    async data mounts. Pure CSS (compositor-friendly), auto-replays on remount,
-   and collapses to no animation under prefers-reduced-motion.
+   plays whenever the page or its data mounts.
 --------------------------------------------------------------------------- */
 @keyframes cascade-in {
   from { opacity: 0; transform: translateY(14px); }
@@ -75,6 +75,3 @@
 .cascade > *:nth-child(6) { animation-delay: 0.27s; }
 .cascade > *:nth-child(7) { animation-delay: 0.32s; }
 .cascade > *:nth-child(8) { animation-delay: 0.37s; }
-@media (prefers-reduced-motion: reduce) {
-  .cascade > * { animation: none; }
-}
