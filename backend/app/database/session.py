@@ -29,6 +29,9 @@ class DatabaseManager:
         self._resolved = False
         self.using_fallback = False
         self.last_error: str | None = None
+        # Serverless deployments set this False: a silent SQLite fallback would
+        # lose all data when the ephemeral instance is recycled.
+        self.allow_fallback = True
 
     def _try_postgres(self) -> bool:
         try:
@@ -54,6 +57,11 @@ class DatabaseManager:
             if not self._resolved:
                 self._resolved = True
                 if not self._try_postgres():
+                    if not self.allow_fallback:
+                        raise RuntimeError(
+                            "DATABASE_URL unreachable and SQLite fallback disabled "
+                            f"(serverless mode). Last error: {self.last_error}"
+                        )
                     url = settings.sqlite_fallback_url
                     if url.startswith("sqlite:///./"):
                         Path(url.replace("sqlite:///./", "")).parent.mkdir(parents=True, exist_ok=True)

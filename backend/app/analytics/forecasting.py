@@ -57,8 +57,16 @@ def _holt(values: np.ndarray, horizon: int, alpha: float = 0.35, beta: float = 0
 
 
 def _gbm_forecast(values: np.ndarray, horizon: int) -> tuple[np.ndarray, str]:
-    """Gradient boosting on lag features. Returns (predictions, label)."""
-    from sklearn.ensemble import GradientBoostingRegressor
+    """Gradient boosting on lag features. Returns (predictions, label).
+
+    Falls back to Holt exponential smoothing when scikit-learn is not
+    installed (e.g. slim serverless targets); the backtest still selects
+    among the remaining candidates, so the reported accuracy stays honest.
+    """
+    try:
+        from sklearn.ensemble import GradientBoostingRegressor
+    except ImportError:
+        return _holt(values, horizon), "Exponential Smoothing (Holt)"
 
     lags = 7
     if len(values) < lags + 30:

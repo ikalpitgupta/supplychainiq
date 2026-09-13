@@ -27,15 +27,24 @@ async def lifespan(app: FastAPI):
 
     # First boot on a fresh database: seed deterministic demo data so the app
     # is fully usable immediately (idempotent — skips if products already exist).
-    from sqlalchemy import select
+    # On Postgres, an advisory lock serializes parallel serverless instances
+    # so two cold starts can't double-seed.
+    from sqlalchemy import select, text
     from app.models.product import Product
     with engine.connect() as conn:
-        has_products = conn.execute(select(Product.id).limit(1)).first() is not None
-    if not has_products:
-        logger.info("Empty database detected — seeding demo data...")
-        from app.database.seed import seed_demo_data
-        counts = seed_demo_data()
-        logger.info("Seeded: %s", counts)
+        is_postgres = engine.dialect.name == "postgresql"
+        if is_postgres:
+            conn.execute(text("SELECT pg_advisory_lock(918273645)"))
+        try:
+            has_products = conn.execute(select(Product.id).limit(1)).first() is not None
+            if not has_products:
+                logger.info("Empty database detected — seeding demo data...")
+                from app.database.seed import seed_demo_data
+                counts = seed_demo_data()
+                logger.info("Seeded: %s", counts)
+        finally:
+            if is_postgres:
+                conn.execute(text("SELECT pg_advisory_unlock(918273645)"))
 
     yield
 

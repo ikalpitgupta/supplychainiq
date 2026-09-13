@@ -212,6 +212,22 @@ cd frontend && npm test                       # 33 tests: formatting + CSV utils
 
 The whole app ships as **one container**: FastAPI serves the API and the built frontend on the same origin (the frontend uses relative `/api` paths, so no CORS or env wiring needed). Auto-seed on first boot means a fresh database becomes a fully working demo with no manual step.
 
+### Vercel + Neon (permanent URL, always on — recommended)
+
+Vercel's serverless functions need a real Postgres — pair it with Neon's free tier and the URL **never expires, never sleeps into long cold starts, and data survives redeploys**.
+
+1. **Neon**: [neon.tech](https://neon.tech) → sign in with GitHub → create a project → copy the connection string.
+2. **Vercel**: [vercel.com](https://vercel.com) → sign in with GitHub → **Add New → Project** → import this repo.
+3. Vercel reads `vercel.json` automatically (builds the frontend, wires `/api` to the Python function).
+4. **Environment Variables** (Project → Settings): add
+   - `DATABASE_URL` = the Neon string, **with these changes**: add `?sslmode=require` if missing, and swap `postgresql://` → `postgresql+psycopg2://`
+   - `TOKEN_SECRET` = any long random string (sessions stay valid across instances)
+5. **Deploy**. First cold request seeds the database automatically (advisory-locked, so parallel instances can't double-seed).
+
+Every `git push` auto-redeploys. Demo data resets only if you reset the Neon database.
+
+### Other free hosts
+
 ### Which free host?
 
 | Host | Card needed | Expires | Sleeps | Config |
