@@ -1,0 +1,21 @@
+# Build artifacts
+frontend/node_modules
+frontend/dist
+backend/__pycache__
+**/__pycache__
+*.pyc
+.venv
+venv
+
+# Local state the container must not carry
+backend/*.db
+backend/.freebuff
+.freebuff
+.git
+.gitignore
+*.log
+
+# Editor/tooling
+.idea
+.vscode
+node_modules

@@ -1,0 +1,29 @@
+# Render Blueprint — one-click free deployment for SupplyChainIQ.
+#
+# Deploy: push this repo to GitHub → render.com → New → Blueprint → pick the repo.
+# Render reads this file and provisions the service automatically.
+#
+# Free-tier notes:
+#   • The web service spins down after ~15 min idle; the first request afterwards
+#     cold-starts for ~50s. Demo data is seeded automatically on that first boot.
+#   • The free PostgreSQL add-on expires after 30 days. The app transparently
+#     falls back to SQLite inside the container when that happens — the demo
+#     keeps working, just slower and ephemeral. Set DATABASE_URL to a free
+#     external Postgres (Neon/Supabase) to avoid the expiry.
+services:
+  - type: web
+    name: supplychainiq
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql+psycopg2://supplyiq:supplyiq@localhost:5433/supplychainiq
+        # The app falls back to container SQLite when this is unreachable.
+      - key: CORS_ORIGINS
+        # Same-origin deployment: the backend serves the frontend itself.
+        # Add your external origin here if you host the frontend elsewhere.
+        value: "*"
+      - key: TOKEN_SECRET
+        generateValue: true

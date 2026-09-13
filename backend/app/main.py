@@ -24,6 +24,19 @@ async def lifespan(app: FastAPI):
     run_light_migrations(engine)
     status = db_manager.status()
     logger.info("Database active: %s", status["active"])
+
+    # First boot on a fresh database: seed deterministic demo data so the app
+    # is fully usable immediately (idempotent — skips if products already exist).
+    from sqlalchemy import select
+    from app.models.product import Product
+    with engine.connect() as conn:
+        has_products = conn.execute(select(Product.id).limit(1)).first() is not None
+    if not has_products:
+        logger.info("Empty database detected — seeding demo data...")
+        from app.database.seed import seed_demo_data
+        counts = seed_demo_data()
+        logger.info("Seeded: %s", counts)
+
     yield
 
 
